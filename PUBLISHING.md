@@ -1,0 +1,78 @@
+# Publish this repository yourself
+
+This repository is prepared locally. It has not been published to GitHub and no
+remote destination has been chosen. Do not add the larger investigation workspace
+or any extracted Hive application files to it.
+
+## Review before publishing
+
+Read the code, [development record](docs/development-and-provenance.md) and
+[validation limits](docs/testing.md). The release is monitoring-only. The separate
+control experiments do not establish reliable pause/resume or overnight readiness.
+The implementation and tests were generated with OpenAI Codex; AI-agent review is
+not a substitute for your own understanding or a human security audit.
+
+Run the checks in [CONTRIBUTING.md](CONTRIBUTING.md). Before pushing, inspect the
+tracked files and diff using `git status` and `git show --stat HEAD`. Authentication
+data and proprietary inspection files must remain outside the repository.
+
+## Create the GitHub destination
+
+Before a public release, obtain appropriate review of the implementation,
+protocol documentation and embedded app-client configuration. This project has
+not received legal clearance or permission from Hive. The UK's conditional
+[interoperability decompilation exception](https://www.legislation.gov.uk/ukpga/1988/48/section/50B)
+is not a blanket publishing licence: necessity and limits on use and disclosure
+matter. This project does not determine that its specific facts satisfy that test.
+
+Hive's [October 2026 consumer terms](https://assets.ctfassets.net/mijf9lz5yt3u/16Q4jaretKFDRef8fD8YTv/720ce72d1bd22d668f531270a4aba053/Hive_B2C_T_Cs_Update_19.10.2026.pdf),
+section 11, restrict reverse engineering except where law permits it. That
+qualification does not itself settle whether this project's work is permitted.
+An original-code licence and Codex attribution do not grant rights to Hive's app
+or service. A qualified software/IP adviser should assess the applicable terms
+and publication scope. This is a review note, not legal advice or a conclusion
+that publication is lawful or unlawful. Sources checked 30 October 2026.
+
+The service is also undocumented and may change or restrict third-party clients;
+technical compatibility and legal permission are separate questions.
+
+Create an empty repository in your own GitHub account. Choose its visibility and
+name yourself. Do not initialize another README, licence or gitignore there: this
+local repository already includes them. Follow GitHub's instructions for connecting
+an existing repository, using the actual URL GitHub gives you:
+
+```text
+git remote add origin <YOUR_ACTUAL_GITHUB_REPOSITORY_URL>
+git push -u origin main
+```
+
+The angle-bracketed text is a placeholder, not a configured remote. No assistant
+has run these publication commands. If you already configured an origin, inspect
+it before changing anything rather than blindly adding or replacing it.
+
+Once the destination exists, update the integration manifest's documentation URL
+to your actual project documentation, and commit that change. Until then its
+documentation link points to the real built-in Hive documentation; that page does
+not document this unofficial EV extension. Do not invent maintainer identities,
+repository URLs, endorsement or HACS availability.
+
+Build the clean installation ZIP with `python tools/build_integration_package.py`
+if you want to attach it to a GitHub release. The generated `dist/` directory is
+ignored by Git. Do not upload APKs, decompiled code, raw diagnostic responses or
+personal screenshots as release attachments.
+
+## Home Assistant Core is a separate contribution
+
+The upstream implementation uses the existing Hive integration and its Python
+client library. It is not this custom component copied into Core. See the
+[contribution plan](docs/upstream-contribution-plan.md) and the prepared upstream
+branches when available. A compatible published library release and the target
+project's full checks are prerequisites for a merge-ready Core contribution.
+
+Submit any upstream PR yourself after reviewing and understanding the complete
+change. Retain the upstream template and leave human-review declarations unchecked
+until you can truthfully make them. The PR description should disclose Codex's
+role and distinguish real-device observations from synthetic tests.
+
+References: GitHub's [new repository instructions](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository)
+and [publishing existing local code](https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github).

@@ -1,0 +1,35 @@
+{
+  "title": "Hive EV",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect Hive EV",
+        "description": "Sign in with your Hive account-owner login. This integration monitors your charger through Hive and keeps Hive scheduling in place. Your account password is used only during setup and is not saved.",
+        "data": {"username": "Hive email", "password": "Hive password"}
+      },
+      "sms": {
+        "title": "Verify Hive sign-in",
+        "description": "Enter the SMS verification code sent by Hive. If the code expires, cancel setup and sign in again.",
+        "data": {"code": "SMS code"}
+      },
+      "remember": {
+        "title": "Remember Home Assistant in Hive",
+        "description": "Hive requires Home Assistant to be remembered as a trusted sign-in device for automatic token renewal. Confirm to register 'Home Assistant Hive EV' on your Hive account. This changes sign-in authorization only; charger settings and schedules are not changed. Sign-in tokens and a device key are saved in Home Assistant's configuration. You can cancel to leave setup unfinished.",
+        "data": {"remember_device": "Register Home Assistant Hive EV as a trusted sign-in device"}
+      }
+    },
+    "error": {
+      "invalid_auth": "Hive sign-in was rejected. Check the account-owner login and try again.",
+      "invalid_code": "The verification code was rejected or the sign-in expired. Try again, or cancel and restart setup.",
+      "cannot_connect": "Hive could not be reached. Try again later.",
+      "invalid_response": "Hive returned unexpected monitoring data. Setup could not be completed.",
+      "remember_required": "Confirm the trusted sign-in device registration to finish setup, or cancel."
+    },
+    "abort": {
+      "already_configured": "This Hive account is already configured.",
+      "no_chargers": "No supported Hive EV charger was found on this account.",
+      "wrong_account": "Sign in with the same Hive account used for this integration.",
+      "reauth_successful": "Hive EV sign-in was renewed."
+    }
+  }
+}

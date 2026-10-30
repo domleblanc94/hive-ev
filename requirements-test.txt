@@ -1,0 +1,5 @@
+# Offline tests import the actual pinned authentication dependency.
+# Home Assistant APIs are stubbed; no account/network access is needed.
+pyhive-integration==1.0.10
+aiohttp>=3.11,<4
+probatio==0.13.0

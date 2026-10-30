@@ -1,0 +1,51 @@
+# Local Python environments and output
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+
+# Account/configuration material must never be committed
+.env
+.env.*
+!.env.example
+.storage/
+secrets.yaml
+configuration.yaml
+*.log
+*.har
+*.pcap*
+*token*.json
+*credentials*.json
+private/
+diagnostics/
+captures/
+local-data/
+
+# Original/proprietary inspection material and experimental controls excluded
+*.apk
+*.aab
+*.dex
+*.hbc
+*.bundle
+android-app/
+analysis/
+decompiled/
+platform-tools/
+release-draft/
+*control_trial*
+*watch*.json
+*.zip
+
+# Editor/OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Private investigation notes and pre-publication history backups
+*.bundle
