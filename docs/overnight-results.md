@@ -30,13 +30,23 @@ The later Home Assistant sensor card shows all three optional measurement sensor
 
 The same screenshot shows Paused and session active On. These measurements were absent from the initial idle discovery but are now visible in the installed integration. The activity CSV contains status, session activity and refresh entities only; it does not include the power, energy or duration histories. The screenshot has no capture timestamp, so its values must not be assigned an invented exact time.
 
+## Later power and energy History exports
+
+The owner subsequently supplied two Home Assistant History CSVs on 31 October, one for Session energy and one for Charging power, with 71 rows each including the earlier evening trials and an export-end record. Units below follow the installed sensors' Wh and W definitions; the CSVs do not include a unit column.
+
+After the 22:47 reconnection, energy progresses monotonically from 0 Wh to **7,110 Wh (7.11 kWh)**. The first positive energy sample is **86 Wh at 23:10:08**. The final session total is first recorded at **00:10:35** and is still 7,110 Wh at the export-end record at 09:13:57; a repeated endpoint value is not additional energy.
+
+The power history has **60 positive readings**, from **23:10:08 through 00:09:35**, ranging from **6,973 W to 7,108 W** (approximately 7 kW). Power returns to **0 W at 00:10:35**, exactly matching the recorded Completed status and final-energy timestamp. There are no Unknown or Unavailable readings in either history after the 22:47 reconnection. Earlier Unknown values occurred during the evening trials and are separate from the overnight run.
+
+This confirms actual reported active-power telemetry and a rising session-energy counter, closing the previously pending active-power-history check. These remain charger/Hive-reported measurements, not an independent meter or car comparison. Neither new file contains duration history; the 3,690-second duration remains supported by the earlier screenshot. No exact physical switching time or restart time is inferred from CSV endpoints.
+
 ## Later restart report
 
 On 31 October the owner separately reported restarting Home Assistant, with charger/sensor updates resuming without another sign-in. This is a user-reported recovery observation, not a timed automated restart test. No restart timestamp, recovery log or explicit duplicate-entity/registry comparison was supplied. It does not alter the timestamped overnight CSV evidence.
 
 ## Conclusion and limits
 
-Together the overnight status progression and reported 7.11 kWh support a successful scheduled charging session while the standalone monitoring integration ran. This validates visibility of the optional power, energy and duration sensors on this account. It is not an independent vehicle/meter comparison, proof of a nonzero instantaneous power reading, or evidence that the uninstalled upstream patches work on live hardware.
+Together the overnight status progression and reported 7.11 kWh support a successful scheduled charging session while the standalone monitoring integration ran. This validates visibility of the optional power, energy and duration sensors on this account. The later History exports additionally confirm nonzero reported power and increasing energy. This is not an independent vehicle/meter comparison or evidence that the uninstalled upstream patches work on live hardware.
 
 The run followed cable reconnection after the earlier supervised trials. It does not resolve persistent Finishing after Stop, prove same-plug restart after Stop, establish repeated-night reliability, or validate charging controls. Earlier control-trial readings of zero/absent power remain separate observations. No new charging commands or schedule changes were made for this documentation update.
 

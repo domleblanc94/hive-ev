@@ -4,7 +4,7 @@ These checks use the installed monitoring component. They do not install the sep
 
 ## 1. Export the existing overnight measurement history
 
-The completed 30–31 October charge may already have the missing power history. Check that before waiting for another charge.
+**Completed on 31 October:** the supplied power and energy exports confirm 6,973–7,108 W active power, energy increasing to 7,110 Wh, and 0 W at completion. The steps below remain a reference for future sessions; repeating them is not required for this completed check. A duration CSV and independent comparison remain optional follow-up evidence.
 
 1. Open **History** in Home Assistant.
 2. Select these six charger entities by their display names: **Charging status**, **Charging session active**, **Last successful refresh**, **Charging power**, **Session energy** and **Session charging duration**. Entity IDs can vary; use the entities on this integration's charger device.
@@ -14,7 +14,7 @@ The completed 30–31 October charge may already have the missing power history.
 
 If no earlier numeric history exists, use the next normal scheduled charging session. Missing history is not proof that the charger delivered no energy. Entities may first have appeared later, or Recorder settings may exclude them. Do not change schedules, force a daytime charge or query the database to fill the gap.
 
-Compare with the Hive app's same-session energy and duration where available. A car or meter reading is a useful separate check, but its measurement boundary and losses may differ. The existing screenshot proves visible sensors and a paused reading of 0 W; it does not yet prove recorded active-charge wattage.
+Compare with the Hive app's same-session energy and duration where available. A car or meter reading is a useful separate check, but its measurement boundary and losses may differ. The earlier screenshot shows visible sensors and paused power 0 W; the later History exports now also establish recorded active-charge wattage.
 
 Home Assistant's [History documentation](https://www.home-assistant.io/integrations/history/) describes CSV export and its dependency on Recorder.
 
