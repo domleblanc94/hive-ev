@@ -45,4 +45,4 @@ Recovery depends on conditions not yet understood. The user supplied earlier cha
 
 ## Operational limits
 
-This is cloud polling against undocumented app interfaces, not a local Alfen connection. It depends on Hive authentication, service availability and response compatibility. Sustained refresh-token renewal, overnight behaviour and compatibility across charger models remain unverified. A full Home Assistant runtime validation is also distinct from the local tests described in [testing.md](testing.md).
+This is cloud polling against undocumented app interfaces, not a local Alfen connection. It depends on Hive authentication, service availability and response compatibility. One overnight run now supports scheduled charging and continuous polling with reported session measurements; see [overnight results](overnight-results.md). Specific refresh-token renewal events, restart recovery and compatibility across charger models remain unverified. A full Home Assistant runtime validation is also distinct from the local tests described in [testing.md](testing.md).

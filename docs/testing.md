@@ -1,6 +1,6 @@
 # Testing and validation record
 
-This record separates local automated checks, human observations and remaining work. The corrected trial produced acknowledged commands and charging/end-session state changes. A later read-only observation of manual Hive app operation reproduced the same Finishing outcome. Physical energy transfer and reliable overnight readiness remain unverified.
+This record separates local automated checks, human observations and remaining work. The corrected trial produced acknowledged commands and charging/end-session state changes. A later read-only observation of manual Hive app operation reproduced the same Finishing outcome. The later 30–31 October overnight run supports scheduled charging with Hive reporting 7.11 kWh; it does not retroactively verify the separate control trials or reliable recovery after Stop. See [overnight results](overnight-results.md).
 
 | Area | Evidence | Limit |
 |---|---|---|
@@ -18,6 +18,7 @@ This record separates local automated checks, human observations and remaining w
 | Manual Hive app operation under read-only observation | User-operated Charge Now changed Scheduled → Charging with override true. The user then pressed Stop in Hive: status became FINISHING and `transactionActive` was false, persisting throughout the 90-second observation; Hive also displayed Finishing. Compared saved tariff values were unchanged | This reproduces the corrected tool's end-session pattern. Power was reported as zero and later missing, so physical energy transfer was not proved. It does not establish a separate cancel-override command |
 | Earlier automatic recovery reported by the user | The user supplied charger-history evidence of Finishing → Available → Preparing → SuspendedEVSE at 0 A and said they had not gone outside or unplugged | Automatic progression occurred in that earlier instance. Its cause and conditions remain unresolved; it does not establish readiness or restart behaviour after every Stop |
 | Recovery after v2 STOP | User followed Hive's unplug instruction, disconnected both cable ends and reconnected; Hive returned to Scheduled | This verifies recovery after reconnection on one run, not a requirement to unplug after every Stop or proof of overnight charging. A later manual-app Stop also led to an unplug prompt |
+| Overnight monitoring, 30–31 October 2026 | 680 refresh entries across approximately 11 hours 25 minutes; Scheduled → Waiting to start → Charging → Completed → Paused. Later screenshot shows 7,110 Wh, 3,690 seconds and 0 W while Paused; optional power, energy and duration sensors are now visible | One standalone installation; no active-charge power history or independent meter comparison. Continued authenticated access observed, but individual renewal events and restart recovery not established. Upstream drafts were not installed |
 
 ## Automated coverage
 
@@ -33,15 +34,17 @@ Separate upstream drafts have also been validated: the full Pyhive suite passed 
 
 - Continued entity lifecycle and recovery on the target installation, including a Home Assistant restart; initial loading and status updates were observed.
 - Unattended token renewal over a sustained run, expiry/rejection recovery and interactive reauthentication when required.
-- Power, session energy and charging-duration readings during actual charging; these were missing from the initial idle read.
+- Active-charge power, energy and duration histories and comparison with Hive/car readings. All three optional sensors are now visible; the later screenshot reports 7.11 kWh, 3,690 seconds and paused power 0 W. Nonzero active power has not yet been recorded in supplied evidence.
 - Comparison of reported status with Hive/car observations across scheduled, charging, paused, completed and offline states.
 - Physical charging confirmation during a supervised session, plus a final check that the charger is ready for the next scheduled session; command acknowledgements and reported state transitions have been observed.
-- Overnight scheduled operation and restart-after-stop without unplugging, if the actual device permits it.
+- Further overnight scheduled runs for repeatability; one overnight run is now documented. Restart-after-stop without unplugging remains unresolved and separate from monitoring validation.
 - Additional account/device variants and response changes before any wider compatibility claim.
 
 For an almost-full battery, failure to draw power may reflect the vehicle declining charge. An active transaction is insufficient evidence of successful physical charging. Report accepted request, reported state change and observed power delivery as separate outcomes.
 
 The expectation that Stop always returns Ready or Scheduled without reconnection is unverified. Earlier automatic progression and later persistent Finishing are both part of the record. Static review has not proved a `transactionOverridden: false` cancellation command, and the monitoring integration continues to expose no controls.
+
+See [next steps](next-steps.md) for the ordered monitoring and contribution work.
 
 ## Reproducibility and privacy
 

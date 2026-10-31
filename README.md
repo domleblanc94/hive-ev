@@ -2,7 +2,7 @@
 
 A monitoring-only custom integration for Hive-connected EV chargers, initially tested with an Alfen NG910. It uses the Hive cloud and keeps your existing Hive integration and charger setup in place. It contains no charger controls or schedule changes. It is unofficial and is not endorsed by Hive, Alfen or Home Assistant.
 
-The human user installed this integration in Home Assistant and observed status and session-activity updates. Sustained token renewal, Home Assistant restart recovery and overnight behaviour remain pending. This uses an undocumented app API, so Hive service changes may affect it.
+The human user installed this integration in Home Assistant. During the 30–31 October 2026 overnight run, monitoring continued through a scheduled charge; Hive reported **7.11 kWh** and **61 minutes 30 seconds** of session charging. The power, session energy and duration sensors are now visible; the later paused power reading is **0 W**, while active-charge wattage is not yet recorded. See [overnight results](docs/overnight-results.md) and [next steps](docs/next-steps.md). Home Assistant restart recovery, specific renewal events and longer-term reliability remain to be checked. This uses an undocumented app API, so Hive service changes may affect it.
 
 **Developed with OpenAI Codex:** the implementation, tests and documentation were AI-generated with multi-agent investigation and review; the human user ran local discovery and hardware trials. See [development and provenance](docs/development-and-provenance.md) for the process, attribution and limits.
 
@@ -17,7 +17,7 @@ Separate control research traced the app's confirmation popup and session handle
 - **Charging status:** Hive's reported display state, such as Available or Charging. Available does not establish whether a cable is plugged in.
 - **Charging session active:** Hive's reported transaction flag. An active session does not always mean the car is drawing power.
 - **Last successful refresh:** when Home Assistant last received a successful cloud update, rather than when the charger itself last reported.
-- **Charging power**, **Session energy** and **Session charging duration:** added when Hive first supplies these readings. The idle discovery did not include these measurements. Missing readings stay unknown; they are not replaced with zero.
+- **Charging power**, **Session energy** and **Session charging duration:** added when Hive first supplies these readings. The idle discovery did not include these measurements; all three sensors were visible after the overnight charge. Missing readings stay unknown; they are not replaced with zero.
 
 Session energy and duration can reset with a new session. They are not lifetime energy totals and are not intended as an Energy dashboard consumption source. Connection or authentication failures make entities unavailable instead of presenting old readings as current.
 
@@ -46,7 +46,7 @@ If it fails to load, use **Settings → System → Logs** to find the integratio
 
 ## Development verification
 
-API, authentication, configuration-flow, coordinator and entity checks cover data handling and setup behaviour. Home Assistant interfaces are stubbed in local tests. The implementation was reviewed against Home Assistant 2026.10.4 APIs; the human's successful installation and initial monitoring are separate evidence from these tests. Full lifecycle validation and sustained token renewal remain part of the trial.
+API, authentication, configuration-flow, coordinator and entity checks cover data handling and setup behaviour. Home Assistant interfaces are stubbed in local tests. The implementation was reviewed against Home Assistant 2026.10.4 APIs; the human's successful installation and overnight monitoring are separate evidence from these tests. Full lifecycle validation and sustained token renewal remain part of the trial.
 
 For setup, source structure, local tests and ZIP packaging, see [CONTRIBUTING.md](CONTRIBUTING.md). [Architecture](docs/architecture.md) explains authentication and reported data; [testing](docs/testing.md) records what has and has not been verified. Controls investigated in separate supervised trials are not distributed in this monitoring repository. Stopping a charging session is not established as a pause/resume action, and automatic recovery to readiness remains condition-dependent and unresolved.
 
