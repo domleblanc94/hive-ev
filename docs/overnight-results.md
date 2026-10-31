@@ -30,6 +30,10 @@ The later Home Assistant sensor card shows all three optional measurement sensor
 
 The same screenshot shows Paused and session active On. These measurements were absent from the initial idle discovery but are now visible in the installed integration. The activity CSV contains status, session activity and refresh entities only; it does not include the power, energy or duration histories. The screenshot has no capture timestamp, so its values must not be assigned an invented exact time.
 
+## Later restart report
+
+On 31 October the owner separately reported restarting Home Assistant, with charger/sensor updates resuming without another sign-in. This is a user-reported recovery observation, not a timed automated restart test. No restart timestamp, recovery log or explicit duplicate-entity/registry comparison was supplied. It does not alter the timestamped overnight CSV evidence.
+
 ## Conclusion and limits
 
 Together the overnight status progression and reported 7.11 kWh support a successful scheduled charging session while the standalone monitoring integration ran. This validates visibility of the optional power, energy and duration sensors on this account. It is not an independent vehicle/meter comparison, proof of a nonzero instantaneous power reading, or evidence that the uninstalled upstream patches work on live hardware.

@@ -18,7 +18,8 @@ This record separates local automated checks, human observations and remaining w
 | Manual Hive app operation under read-only observation | User-operated Charge Now changed Scheduled → Charging with override true. The user then pressed Stop in Hive: status became FINISHING and `transactionActive` was false, persisting throughout the 90-second observation; Hive also displayed Finishing. Compared saved tariff values were unchanged | This reproduces the corrected tool's end-session pattern. Power was reported as zero and later missing, so physical energy transfer was not proved. It does not establish a separate cancel-override command |
 | Earlier automatic recovery reported by the user | The user supplied charger-history evidence of Finishing → Available → Preparing → SuspendedEVSE at 0 A and said they had not gone outside or unplugged | Automatic progression occurred in that earlier instance. Its cause and conditions remain unresolved; it does not establish readiness or restart behaviour after every Stop |
 | Recovery after v2 STOP | User followed Hive's unplug instruction, disconnected both cable ends and reconnected; Hive returned to Scheduled | This verifies recovery after reconnection on one run, not a requirement to unplug after every Stop or proof of overnight charging. A later manual-app Stop also led to an unplug prompt |
-| Overnight monitoring, 30–31 October 2026 | 680 refresh entries across approximately 11 hours 25 minutes; Scheduled → Waiting to start → Charging → Completed → Paused. Later screenshot shows 7,110 Wh, 3,690 seconds and 0 W while Paused; optional power, energy and duration sensors are now visible | One standalone installation; no active-charge power history or independent meter comparison. Continued authenticated access observed, but individual renewal events and restart recovery not established. Upstream drafts were not installed |
+| Overnight monitoring, 30–31 October 2026 | 680 refresh entries across approximately 11 hours 25 minutes; Scheduled → Waiting to start → Charging → Completed → Paused. Later screenshot shows 7,110 Wh, 3,690 seconds and 0 W while Paused; optional power, energy and duration sensors are now visible | One standalone installation; no active-charge power history or independent meter comparison. Continued authenticated access observed, but individual renewal events and restart recovery not exercised by this export. Upstream drafts were not installed |
+| Home Assistant restart, reported 31 October 2026 | Owner reports that Home Assistant was restarted and updates resumed without another sign-in | User-reported outcome; no exact restart time, recovery logs or duplicate-entity/registry comparison supplied |
 
 ## Automated coverage
 
@@ -28,11 +29,15 @@ The supervised-trial checks use synthetic responses to exercise command gating a
 
 The local test environment uses minimal Home Assistant stubs. The implementation was reviewed against Home Assistant 2026.10.4 interfaces; no claim is made that these tests load the integration inside that full runtime. Test counts are the recorded development-stage results, not a promise that every future checkout has the same tests.
 
+## Additional upstream checks, 31 October 2026
+
+Additional local validation on 31 October 2026: targeted Hive hassfest completed all 24 plugin checks with zero invalid integrations. A separate real-framework compatibility test passed using an actual locally built, unpublished Pyhive 2.0.0b4 wheel: real Hive construction/startSession, legacy discovery, EV requests/parser/model, and Core setup/entity updates/unload were exercised with synthetic HTTP responses only. No Hive implementation classes or methods were mocked. It checked reported-only readings, optional measurements appearing later, EV failure availability and GET-only device requests. This is one additional contract check, separate from the existing 30 Core tests; it made no account calls, did not change the manifest pin and does not establish live deployment of the upstream draft.
+
 ## Remaining validation
 
 Separate upstream drafts have also been validated: the full Pyhive suite passed 1,124 tests with 100% coverage, and all 30 Core Hive tests passed on Linux Python 3.14.10 using genuine Home Assistant fixtures. These are separate from the standalone integration's 20 offline tests. The new library and Core drafts have not been live-tested on the owner's account. Core's full development bootstrap and repository-wide checks remain incomplete, and a published compatible library release/dependency upgrade is still required. See [the contribution plan](upstream-contribution-plan.md).
 
-- Continued entity lifecycle and recovery on the target installation, including a Home Assistant restart; initial loading and status updates were observed.
+- Detailed restart/lifecycle checks, including entity identity and duplicates. The owner now reports a Home Assistant restart with updates resuming without another sign-in; exact recovery time and logs were not supplied.
 - Unattended token renewal over a sustained run, expiry/rejection recovery and interactive reauthentication when required.
 - Active-charge power, energy and duration histories and comparison with Hive/car readings. All three optional sensors are now visible; the later screenshot reports 7.11 kWh, 3,690 seconds and paused power 0 W. Nonzero active power has not yet been recorded in supplied evidence.
 - Comparison of reported status with Hive/car observations across scheduled, charging, paused, completed and offline states.
@@ -51,3 +56,7 @@ See [next steps](next-steps.md) for the ordered monitoring and contribution work
 Run tests with synthetic fixtures only. Keep account authentication local, suppress raw responses and share only bounded technical summaries. Do not put live device IDs, home IDs, tokens, passwords or authentication screenshots into fixtures, issue reports or CI logs. Do not upload the inspected APK or decompiled app to CI.
 
 Before updating this record, retain the distinction between a successful cloud read, a successful Home Assistant installation and a verified physical charging action. Record failures and unresolved results explicitly.
+
+## Final focused checks, 31 October 2026
+
+The final post-annotation rerun passed all 30 Core Hive tests in 18.61 seconds and the separate actual-library contract test in 2.07 seconds. Scoped mypy passed all 13 Hive source files using `--follow-imports=silent`; this is not a repository-wide typing pass. Required `typing.override` decorators were added to five new overridden methods, without changing runtime behaviour. Hive hassfest was rerun with all 24 plugin checks passing and zero invalid integrations. The local unpublished wheel was built with Python 3.14; the manifest dependency remains unchanged.
