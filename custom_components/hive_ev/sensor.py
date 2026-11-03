@@ -15,7 +15,8 @@ from homeassistant.core import callback
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, CONF_COST_RATE, CONF_COST_CURRENCY
+from .cost_helper import HiveEVCostHelper
 from .energy_helper import HiveEVEnergyDashboardHelper, valid_sample
 
 if TYPE_CHECKING:
@@ -64,6 +65,12 @@ async def async_setup_entry(hass, entry, async_add_entities):
             if identity not in added and valid_sample(device.power_w, device.last_updated):
                 added.add(identity)
                 entities.append(HiveEVEnergyDashboardHelper(coordinator, node_id))
+            rate_entity = entry.options.get(CONF_COST_RATE) if hasattr(entry, "options") else None
+            currency = entry.options.get(CONF_COST_CURRENCY) if hasattr(entry, "options") else None
+            identity = (node_id, "cost_helper")
+            if rate_entity and currency and identity not in added:
+                added.add(identity)
+                entities.append(HiveEVCostHelper(coordinator, node_id, rate_entity, currency))
         if entities:
             async_add_entities(entities)
 

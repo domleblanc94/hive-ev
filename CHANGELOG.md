@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0b3 — selectable electricity-rate cost helper
+
+Prepared locally, not published.
+
+- Add optional charging cost estimation from a user-selected local electricity-rate sensor, independent of supplier.
+- Use current rates over observed charging intervals, preserve currency-specific totals and support negative-rate credits.
+- Document daily, weekly and monthly cost using calendar-change Statistic cards.
+- Keep charging commands and saved Hive schedules unchanged.
+
 ## 0.2.0b2 — Energy dashboard helper, prepared 3 November 2026
 
 Not yet published.

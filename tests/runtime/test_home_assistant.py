@@ -637,3 +637,310 @@ async def test_energy_helper_late_power_has_one_disabled_candidate(hass: HomeAss
     assert entity_registry.async_get(helper_id).disabled_by is er.RegistryEntryDisabler.INTEGRATION
     assert hass.states.get(helper_id) is None
     assert len([entity for entity in entity_registry.entities.values() if entity.platform == DOMAIN and entity.unique_id == "runtime-evse_energy_dashboard_helper"]) == 1
+
+
+@pytest.fixture
+def cost_entry(prototype_entry: MockConfigEntry) -> MockConfigEntry:
+    """An invented opt-in price source, independent of any electricity supplier."""
+    return MockConfigEntry(domain=DOMAIN, unique_id=prototype_entry.unique_id,
+        data=prototype_entry.data, options={"electricity_rate_sensor": "sensor.runtime_rate",
+            "cost_currency": "GBP"})
+
+
+def cost_entity_id(registry: er.EntityRegistry, currency: str = "GBP") -> str:
+    entity_id = registry.async_get_entity_id("sensor", DOMAIN, f"runtime-evse_cost_helper_{currency}")
+    assert entity_id is not None
+    return entity_id
+
+
+async def test_cost_optional_and_selected_rate_metadata(hass: HomeAssistant,
+    prototype_entry: MockConfigEntry, prototype_http: AiohttpClientMocker,
+    entity_registry: er.EntityRegistry) -> None:
+    """No cost helper exists until the owner selects a supported current rate."""
+    await load_entry(hass, prototype_entry)
+    assert entity_registry.async_get_entity_id("sensor", DOMAIN, "runtime-evse_cost_helper_GBP") is None
+    hass.states.async_set("sensor.runtime_rate", "15", {"unit_of_measurement": "p/kWh"})
+    flow = await hass.config_entries.options.async_init(prototype_entry.entry_id)
+    result = await hass.config_entries.options.async_configure(flow["flow_id"], user_input={
+        "enable_experimental_controls": False, "owner_confirmed_alfen": False,
+        "electricity_rate_sensor": "sensor.runtime_rate"})
+    assert result["type"] == "create_entry"
+    await hass.async_block_till_done()
+    assert prototype_entry.options["electricity_rate_sensor"] == "sensor.runtime_rate"
+    helper_id = cost_entity_id(entity_registry)
+    state = hass.states.get(helper_id)
+    assert state is not None
+    assert state.attributes["device_class"] == "monetary"
+    assert state.attributes["state_class"] == "total"
+    assert state.attributes["unit_of_measurement"] == "GBP"
+    assert state.attributes["estimated"] is True and state.attributes["helper"] is True
+    assert not [entity for entity in entity_registry.entities.values() if entity.platform == DOMAIN and entity.domain == "button"]
+    assert {call[0].upper() for call in prototype_http.mock_calls} == {"GET"}
+
+
+async def test_cost_rate_change_splits_interval(hass: HomeAssistant,
+    cost_entry: MockConfigEntry, prototype_http: AiohttpClientMocker,
+    prototype_nodes: dict, entity_registry: er.EntityRegistry,
+    freezer: FrozenDateTimeFactory) -> None:
+    """Changing the local rate divides an observed power interval without another API read."""
+    energy_feature(prototype_nodes)["transactionActivePowerImportW"]["reportedValue"] = 7000
+    set_http(prototype_http, prototype_nodes)
+    hass.states.async_set("sensor.runtime_rate", "10", {"unit_of_measurement": "p/kWh"})
+    await load_entry(hass, cost_entry)
+    helper_id = cost_entity_id(entity_registry)
+    calls_before = len(prototype_http.mock_calls)
+    freezer.tick(timedelta(seconds=30))
+    hass.states.async_set("sensor.runtime_rate", "30", {"unit_of_measurement": "p/kWh"})
+    await hass.async_block_till_done()
+    assert len(prototype_http.mock_calls) == calls_before
+    await tick_refresh(hass, cost_entry, freezer, 30)
+    assert float(hass.states.get(helper_id).state) == pytest.approx(7 * (0.1 + 0.3) / 120, abs=1e-6)
+    assert {call[0].upper() for call in prototype_http.mock_calls} == {"GET"}
+
+
+async def test_cost_negative_credit_and_restore(hass: HomeAssistant,
+    cost_entry: MockConfigEntry, prototype_http: AiohttpClientMocker,
+    prototype_nodes: dict, entity_registry: er.EntityRegistry,
+    freezer: FrozenDateTimeFactory) -> None:
+    """Credits decrease a monetary TOTAL, restored without charging for downtime."""
+    energy_feature(prototype_nodes)["transactionActivePowerImportW"]["reportedValue"] = 7000
+    set_http(prototype_http, prototype_nodes)
+    hass.states.async_set("sensor.runtime_rate", "-0.2", {"unit_of_measurement": "GBP/kWh"})
+    await load_entry(hass, cost_entry)
+    helper_id = cost_entity_id(entity_registry)
+    await tick_refresh(hass, cost_entry, freezer, 60)
+    before = float(hass.states.get(helper_id).state)
+    assert before == pytest.approx(-7 * 0.2 / 60, abs=1e-6)
+    assert await hass.config_entries.async_unload(cost_entry.entry_id)
+    await async_mock_restore_state_shutdown_restart(hass)
+    freezer.tick(timedelta(seconds=600))
+    assert await hass.config_entries.async_setup(cost_entry.entry_id)
+    await hass.async_block_till_done()
+    assert float(hass.states.get(helper_id).state) == pytest.approx(before, abs=1e-6)
+    await tick_refresh(hass, cost_entry, freezer, 60)
+    assert float(hass.states.get(helper_id).state) == pytest.approx(2 * before, abs=1e-6)
+
+
+async def test_cost_invalid_price_never_bridges_unknown_period(hass: HomeAssistant,
+    cost_entry: MockConfigEntry, prototype_http: AiohttpClientMocker,
+    prototype_nodes: dict, entity_registry: er.EntityRegistry,
+    freezer: FrozenDateTimeFactory) -> None:
+    """A missing rate leaves costs unavailable and recovery starts a fresh observation."""
+    energy_feature(prototype_nodes)["transactionActivePowerImportW"]["reportedValue"] = 7000
+    set_http(prototype_http, prototype_nodes)
+    hass.states.async_set("sensor.runtime_rate", "0.1", {"unit_of_measurement": "GBP/kWh"})
+    await load_entry(hass, cost_entry)
+    helper_id = cost_entity_id(entity_registry)
+    await tick_refresh(hass, cost_entry, freezer, 60)
+    before = float(hass.states.get(helper_id).state)
+    hass.states.async_set("sensor.runtime_rate", "unavailable", {"unit_of_measurement": "GBP/kWh"})
+    await hass.async_block_till_done()
+    assert hass.states.get(helper_id).state == "unavailable"
+    await tick_refresh(hass, cost_entry, freezer, 60)
+    hass.states.async_set("sensor.runtime_rate", "0.1", {"unit_of_measurement": "GBP/kWh"})
+    await hass.async_block_till_done()
+    assert float(hass.states.get(helper_id).state) == pytest.approx(before, abs=1e-6)
+    await tick_refresh(hass, cost_entry, freezer, 60)
+    assert float(hass.states.get(helper_id).state) == pytest.approx(before + 7 * 0.1 / 60, abs=1e-6)
+
+
+async def test_cost_repeated_rate_events_do_not_refresh_stale_power(hass: HomeAssistant,
+    cost_entry: MockConfigEntry, prototype_http: AiohttpClientMocker,
+    prototype_nodes: dict, entity_registry: er.EntityRegistry,
+    freezer: FrozenDateTimeFactory) -> None:
+    """Local rate updates cannot extend the age of an old cloud power reading."""
+    energy_feature(prototype_nodes)["transactionActivePowerImportW"]["reportedValue"] = 7000
+    set_http(prototype_http, prototype_nodes)
+    hass.states.async_set("sensor.runtime_rate", "0.1", {"unit_of_measurement": "GBP/kWh"})
+    await load_entry(hass, cost_entry)
+    helper_id = cost_entity_id(entity_registry)
+    cost_entry.runtime_data._unschedule_refresh()
+    cost_entry.runtime_data.update_interval = None
+    for price in (0.2, 0.3, 0.4):
+        freezer.tick(timedelta(seconds=60))
+        hass.states.async_set("sensor.runtime_rate", str(price), {"unit_of_measurement": "GBP/kWh"})
+        await hass.async_block_till_done()
+    previous = float(hass.states.get(helper_id).state)
+    freezer.tick(timedelta(seconds=60))
+    hass.states.async_set("sensor.runtime_rate", "0.5", {"unit_of_measurement": "GBP/kWh"})
+    await hass.async_block_till_done()
+    assert hass.states.get(helper_id).state == "unavailable"
+    await cost_entry.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+    assert float(hass.states.get(helper_id).state) == pytest.approx(previous, abs=1e-6)
+
+
+@pytest.mark.parametrize(("unit", "price", "currency", "per_kwh"), [
+    ("GBp/kWh", 15, "GBP", 0.15), ("EUR/kWh", 0.2, "EUR", 0.2),
+    ("USD/MWh", 120, "USD", 0.12), ("JPY/kWh", 20, "JPY", 20),
+])
+async def test_cost_provider_neutral_units(hass: HomeAssistant,
+    prototype_entry: MockConfigEntry, prototype_http: AiohttpClientMocker,
+    prototype_nodes: dict, entity_registry: er.EntityRegistry,
+    freezer: FrozenDateTimeFactory, unit: str, price: float,
+    currency: str, per_kwh: float) -> None:
+    """Explicit currency codes and major/minor/megawatt-hour conversions work in HA."""
+    energy_feature(prototype_nodes)["transactionActivePowerImportW"]["reportedValue"] = 7000
+    set_http(prototype_http, prototype_nodes)
+    hass.states.async_set("sensor.runtime_rate", str(price), {"unit_of_measurement": unit})
+    await load_entry(hass, prototype_entry)
+    flow = await hass.config_entries.options.async_init(prototype_entry.entry_id)
+    result = await hass.config_entries.options.async_configure(flow["flow_id"], user_input={
+        "enable_experimental_controls": False, "owner_confirmed_alfen": False,
+        "electricity_rate_sensor": "sensor.runtime_rate"})
+    assert result["type"] == "create_entry"
+    await hass.async_block_till_done()
+    assert prototype_entry.options["cost_currency"] == currency
+    helper_id = cost_entity_id(entity_registry, currency)
+    assert hass.states.get(helper_id).attributes["unit_of_measurement"] == currency
+    await tick_refresh(hass, prototype_entry, freezer, 60)
+    assert float(hass.states.get(helper_id).state) == pytest.approx(7 * per_kwh / 60, abs=1e-6)
+
+
+async def test_cost_config_preserves_controls_and_remove_keeps_monitoring(hass: HomeAssistant,
+    enabled_entry: MockConfigEntry, prototype_http: AiohttpClientMocker,
+    entity_registry: er.EntityRegistry) -> None:
+    """Cost options retain prior enrollment, and explicit removal clears only cost settings."""
+    hass.states.async_set("sensor.runtime_rate", "0.2", {"unit_of_measurement": "GBP/kWh"})
+    await load_entry(hass, enabled_entry)
+    flow = await hass.config_entries.options.async_init(enabled_entry.entry_id)
+    result = await hass.config_entries.options.async_configure(flow["flow_id"], user_input={
+        "enable_experimental_controls": True, "owner_confirmed_alfen": True,
+        "electricity_rate_sensor": "sensor.runtime_rate"})
+    assert result["type"] == "create_entry"
+    await hass.async_block_till_done()
+    assert enabled_entry.options["enable_experimental_controls"] is True
+    assert enabled_entry.options["owner_confirmed_alfen"] is True
+    helper_id = cost_entity_id(entity_registry)
+    assert hass.states.get(helper_id) is not None
+    assert hass.states.get(get_button(entity_registry, "charge_now")) is not None
+    flow = await hass.config_entries.options.async_init(enabled_entry.entry_id)
+    result = await hass.config_entries.options.async_configure(flow["flow_id"], user_input={
+        "enable_experimental_controls": True, "owner_confirmed_alfen": True,
+        "remove_cost_helper": True})
+    assert result["type"] == "create_entry"
+    await hass.async_block_till_done()
+    assert "electricity_rate_sensor" not in enabled_entry.options
+    assert "cost_currency" not in enabled_entry.options
+    assert hass.states.get(helper_id).state == "unavailable"
+    assert hass.states.get(helper_id).attributes["restored"] is True
+    assert enabled_entry.runtime_data.data["runtime-evse"].power_w == 0
+    assert hass.states.get(get_button(entity_registry, "charge_now")) is not None
+    assert {call[0].upper() for call in prototype_http.mock_calls} == {"GET"}
+
+
+async def test_cost_rejects_ambiguous_price_unit(hass: HomeAssistant,
+    prototype_entry: MockConfigEntry, prototype_http: AiohttpClientMocker) -> None:
+    """A dollar sign alone does not tell the integration which dollar currency to use."""
+    hass.states.async_set("sensor.runtime_rate", "0.2", {"unit_of_measurement": "$/kWh"})
+    await load_entry(hass, prototype_entry)
+    flow = await hass.config_entries.options.async_init(prototype_entry.entry_id)
+    result = await hass.config_entries.options.async_configure(flow["flow_id"], user_input={
+        "enable_experimental_controls": False, "owner_confirmed_alfen": False,
+        "electricity_rate_sensor": "sensor.runtime_rate"})
+    assert result["type"] == "form"
+    assert result["errors"]["base"] == "invalid_rate_sensor"
+    assert not prototype_entry.options
+
+
+async def test_cost_currency_change_gets_separate_total(hass: HomeAssistant,
+    cost_entry: MockConfigEntry, prototype_http: AiohttpClientMocker,
+    prototype_nodes: dict, entity_registry: er.EntityRegistry,
+    freezer: FrozenDateTimeFactory) -> None:
+    """Re-enrolling a changed currency cannot relabel an existing monetary amount."""
+    energy_feature(prototype_nodes)["transactionActivePowerImportW"]["reportedValue"] = 7000
+    set_http(prototype_http, prototype_nodes)
+    hass.states.async_set("sensor.runtime_rate", "0.1", {"unit_of_measurement": "GBP/kWh"})
+    await load_entry(hass, cost_entry)
+    gbp_id = cost_entity_id(entity_registry)
+    await tick_refresh(hass, cost_entry, freezer, 60)
+    assert float(hass.states.get(gbp_id).state) > 0
+    hass.states.async_set("sensor.runtime_rate", "0.2", {"unit_of_measurement": "USD/kWh"})
+    await hass.async_block_till_done()
+    assert hass.states.get(gbp_id).state == "unavailable"
+    flow = await hass.config_entries.options.async_init(cost_entry.entry_id)
+    result = await hass.config_entries.options.async_configure(flow["flow_id"], user_input={
+        "enable_experimental_controls": False, "owner_confirmed_alfen": False,
+        "electricity_rate_sensor": "sensor.runtime_rate"})
+    assert result["type"] == "create_entry"
+    await hass.async_block_till_done()
+    assert cost_entry.options["cost_currency"] == "USD"
+    usd_id = cost_entity_id(entity_registry, "USD")
+    assert usd_id != gbp_id
+    assert float(hass.states.get(usd_id).state) == 0
+    assert hass.states.get(usd_id).attributes["unit_of_measurement"] == "USD"
+
+
+@pytest.fixture
+async def mock_recorder_before_hass(async_test_recorder):
+    """Apply standard HA Recorder test patches before creating hass."""
+
+
+async def test_cost_recorder_sum_includes_negative_tariff_credit(hass: HomeAssistant,
+    cost_entry: MockConfigEntry, prototype_http: AiohttpClientMocker,
+    prototype_nodes: dict, entity_registry: er.EntityRegistry,
+    freezer: FrozenDateTimeFactory, recorder_mock) -> None:
+    """Actual Recorder stores signed cost changes for statistics-based daily display."""
+    from pytest_homeassistant.components.recorder.common import (
+        async_wait_recording_done, do_adhoc_statistics, get_start_time,
+        statistics_during_period,
+    )
+    from homeassistant.util import dt as dt_util
+
+    start = get_start_time(dt_util.utcnow())
+    freezer.move_to(start)
+    energy_feature(prototype_nodes)["transactionActivePowerImportW"]["reportedValue"] = 7000
+    set_http(prototype_http, prototype_nodes)
+    hass.states.async_set("sensor.runtime_rate", "0.1", {"unit_of_measurement": "GBP/kWh"})
+    await load_entry(hass, cost_entry)
+    helper_id = cost_entity_id(entity_registry)
+    await async_wait_recording_done(hass)
+    await tick_refresh(hass, cost_entry, freezer, 60)
+    await async_wait_recording_done(hass)
+    hass.states.async_set("sensor.runtime_rate", "-0.2", {"unit_of_measurement": "GBP/kWh"})
+    await hass.async_block_till_done()
+    await tick_refresh(hass, cost_entry, freezer, 60)
+    await tick_refresh(hass, cost_entry, freezer, 60)
+    await async_wait_recording_done(hass)
+    expected = 7 * (0.1 - 0.2 - 0.2) / 60
+    assert float(hass.states.get(helper_id).state) == pytest.approx(expected, abs=1e-6)
+    do_adhoc_statistics(hass, start=start)
+    await async_wait_recording_done(hass)
+    stats = statistics_during_period(hass, start, period="5minute", statistic_ids={helper_id})
+    assert helper_id in stats
+    assert len(stats[helper_id]) == 1
+    assert stats[helper_id][0]["state"] == pytest.approx(expected, abs=1e-6)
+    assert stats[helper_id][0]["sum"] == pytest.approx(expected, abs=1e-6)
+    # Roll up the observed hour and query a real daily signed change statistic.
+    do_adhoc_statistics(hass, start=start.replace(minute=55))
+    await async_wait_recording_done(hass)
+    from homeassistant.components.recorder import statistics
+    daily = statistics.statistics_during_period(hass, start.replace(hour=0, minute=0),
+        None, {helper_id}, "day", None, {"change", "sum"})
+    assert len(daily[helper_id]) == 1
+    assert daily[helper_id][0]["sum"] == pytest.approx(expected, abs=1e-6)
+    assert daily[helper_id][0]["change"] == pytest.approx(expected, abs=1e-6)
+
+
+
+async def test_cost_rate_event_cannot_bridge_long_power_gap(hass: HomeAssistant,
+    cost_entry: MockConfigEntry, prototype_http: AiohttpClientMocker,
+    prototype_nodes: dict, entity_registry: er.EntityRegistry,
+    freezer: FrozenDateTimeFactory) -> None:
+    """A late rate event does not disguise a cloud power observation gap."""
+    energy_feature(prototype_nodes)["transactionActivePowerImportW"]["reportedValue"] = 7000
+    set_http(prototype_http, prototype_nodes)
+    hass.states.async_set("sensor.runtime_rate", "0.1", {"unit_of_measurement": "GBP/kWh"})
+    await load_entry(hass, cost_entry)
+    helper_id = cost_entity_id(entity_registry)
+    cost_entry.runtime_data._unschedule_refresh()
+    cost_entry.runtime_data.update_interval = None
+    freezer.tick(timedelta(seconds=170))
+    hass.states.async_set("sensor.runtime_rate", "0.2", {"unit_of_measurement": "GBP/kWh"})
+    await hass.async_block_till_done()
+    before = float(hass.states.get(helper_id).state)
+    assert before == pytest.approx(7 * 0.1 * 170 / 3600, abs=1e-6)
+    await tick_refresh(hass, cost_entry, freezer, 130)
+    assert float(hass.states.get(helper_id).state) == pytest.approx(before, abs=1e-6)
+    await tick_refresh(hass, cost_entry, freezer, 60)
+    assert float(hass.states.get(helper_id).state) == pytest.approx(before + 7 * 0.2 / 60, abs=1e-6)

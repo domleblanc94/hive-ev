@@ -2,7 +2,7 @@
 
 <img src="custom_components/hive_ev/brand/icon.png" alt="Unofficial Hive EV logo" width="240">
 
-**0.2.0b2 — beta release candidate.** Monitor a Hive-connected EV charger and optionally enable two experimental manual controls: **Charge now** and **End charging session**. Controls are off on a new installation. Pause/resume and schedule editing are not included.
+**0.2.0b3 — beta release candidate.** Monitor a Hive-connected EV charger and optionally enable two experimental manual controls: **Charge now** and **End charging session**. Controls are off on a new installation. Pause/resume and schedule editing are not included.
 
 Tested by one owner with a Hive-connected **Alfen NG910, firmware 5.8.1-4123**, using Home Assistant OS. The charger remains connected to Hive over its existing mobile connection; no local charger connection or backend change is required. Other charger models, Power+/DSR control and multiple-charger control are not validated. This is unofficial and is not endorsed by Hive, Alfen or Home Assistant.
 
@@ -13,11 +13,12 @@ Tested by one owner with a Hive-connected **Alfen NG910, firmware 5.8.1-4123**, 
 - Reported charging status and session-active flag. An active session can be Scheduled or Paused at 0 W.
 - Charging power (W), session energy (Wh), and session charging duration (seconds), added when Hive first supplies them. Missing values stay unknown.
 - Optional **Energy dashboard helper**: a cumulative kWh estimate from reported power, disabled by default and independent of supplier/pricing.
+- Optional **Charging cost helper**, configured with your own current electricity-rate sensor; cumulative cost and daily/weekly/monthly Statistic-card views.
 - Last successful refresh, recording cloud receipt time. Polling is every 60 seconds; this is not a direct charger freshness measurement.
 - Optional **Charge now (experimental)** and **End charging session (experimental)** buttons, with explicit owner/Alfen enrollment and fresh-state checks.
 - An explicit diagnostic download containing bounded technical shapes and redacted metadata, using the existing authenticated session.
 
-Session energy/duration reset between sessions. Session energy is not a lifetime energy total or an Energy dashboard consumption source. For the dashboard, enable the native **Energy dashboard helper** on the charger device and select it for energy consumption, with **Charging power** for power consumption; see [Energy dashboard and spend](docs/energy-dashboard.md). An optional provider-neutral GBP cost-package example is supplied for manual configuration; Hive EV does not install it automatically.
+Session energy/duration reset between sessions. Session energy is not a lifetime energy total or an Energy dashboard consumption source. For the dashboard, enable the native **Energy dashboard helper** on the charger device and select it for energy consumption, with **Charging power** for power consumption; see [Energy dashboard and spend](docs/energy-dashboard.md). For charging spend, optionally select a current unit-rate sensor in Hive EV Configure. No supplier-specific entity is built in. The native cost helper is separate from the Energy dashboard device chart; its daily change can be shown with a Statistic card. The older manual GBP package remains an alternative.
 
 ## Install or upgrade
 
@@ -54,7 +55,7 @@ See [testing](docs/testing.md) and [release validation](docs/release-validation.
 
 ## Authentication, diagnostics and support
 
-Credentials are entered only in Home Assistant. Its config-entry storage retains tokens, expiry, account identity and an optional trusted-device key; account and device passwords are not retained. Protect backups because they can contain tokens. Normal reauthentication may require another SMS. Removing this integration does not automatically revoke a Hive trusted sign-in record.
+Credentials are entered only in Home Assistant. Its config-entry storage retains tokens, expiry, account identity and an optional trusted-device key; cost options also store the selected local rate entity ID and currency; account and device passwords are not retained. Protect backups because they can contain tokens. Normal reauthentication may require another SMS. Removing this integration does not automatically revoke a Hive trusted sign-in record.
 
 Use the integration entry's three-dot menu → **Download diagnostics** for technical troubleshooting. The component excludes credentials, account/device identifiers, arbitrary values and raw readings from its data. Home Assistant may add standard system/integration metadata and an entry-derived filename outside that sanitizer. Review the file before sharing. Diagnostic downloads do not activate controls or send charging commands. See [diagnostics](docs/diagnostics.md).
 

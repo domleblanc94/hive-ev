@@ -14,7 +14,7 @@ python tools/build_integration_package.py
 python tools/check_package.py
 ```
 
-Activate `.venv` before running the remaining commands (`.venv\Scripts\Activate.ps1` on Windows, `source .venv/bin/activate` on Linux/macOS). These 56 checks use Home Assistant stubs and invented data. They must not sign in, request SMS or contact a real account/charger.
+Activate `.venv` before running the remaining commands (`.venv\Scripts\Activate.ps1` on Windows, `source .venv/bin/activate` on Linux/macOS). These 70 checks use Home Assistant stubs and invented data. They must not sign in, request SMS or contact a real account/charger.
 
 The separate actual Home Assistant pytest harness lives in `tests/runtime/`, outside offline discovery. Its README explains copying the test into a suitable Core framework checkout and using HIVE_EV_SOURCE_DIR. It requires the real Home Assistant test environment and the component's declared released Pyhive 1.0.10 dependency. Do not install the unpublished upstream-library draft as a substitute.
 
@@ -28,6 +28,7 @@ The packaging script whitelists component files, public docs and licence notices
 | api.py / coordinator.py | Authenticated monitoring, reported parsing and unavailable/reauth state |
 | sensor.py / binary_sensor.py | Stable monitoring entities and late optional telemetry |
 | energy_helper.py | Default-disabled cumulative kWh estimate, restore and observation-gap handling |
+| cost_helper.py / cost_math.py | User-selected local rates, explicit units/currencies, signed cost totals and tariff-event boundaries |
 | controls.py / button.py | Fresh guarded manual writes, attempt limits, uncertain-delivery opt-out |
 | diagnostics.py / diagnostic_shapes.py | Explicit bounded technical diagnostics and redaction |
 | tests/ | Synthetic offline suite; tests/runtime/ is the separate real-framework harness |
@@ -49,3 +50,5 @@ The separate built-in Hive contribution uses a public Python client boundary and
 ## Hosted checks
 
 The prepared GitHub Actions workflow runs the offline suite, builds the whitelisted install ZIP, verifies its file scope/source/privacy markers and retains a review artifact. It uses read-only repository permissions and does not publish releases or contact a Hive account. Action revisions are pinned to commits verified against their official release tags. The real-framework suite remains a separate supported-environment check. No hosted run is claimed before this repository is published and GitHub executes it.
+
+Cost-helper changes must test tariff boundaries, same-timestamp observations, currency isolation, signed credits and independent power freshness across rate events. Preserve unrelated options and experimental-control opt-out behavior. Do not add supplier-specific entity IDs, silently guess units or recover missing cost by multiplying historical energy by a current rate.

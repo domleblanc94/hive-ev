@@ -42,17 +42,20 @@
   "options": {
     "step": {
       "init": {
-        "title": "Experimental Alfen controls",
-        "description": "Enable only for your single Alfen charger and a supervised manual trial. Charge now may use daytime electricity. End charging session sends cable unlock/end, can leave Finishing and may require unplugging and reconnecting; it is NOT pause/resume. Recovery after ending a session can vary. Saved schedules are not edited, but overnight readiness is NOT guaranteed. After an uncertain request controls turn off: check/cancel any pending Charge now in Hive before explicitly enabling again. Re-enabling does not cancel an earlier request. Do not use these buttons in automations.",
+        "title": "Hive EV options",
+        "description": "Optional cost helper: select your current electricity unit-price sensor. Explicit ISO currency/kWh or currency/MWh units are supported, plus £, €, p, pence and GBp aliases. Ambiguous $ or cents are not accepted. The helper estimates cumulative cost; tariff credits may lower its total. It is independent of supplier, does not change your tariff or schedule, and cannot recover missed observations. To disable it, select Remove cost helper. Experimental charging controls: enable only for your single Alfen charger and a supervised manual trial. Charge now may use daytime electricity. End charging session sends cable unlock/end, can leave Finishing and may require unplugging and reconnecting; it is NOT pause/resume. Recovery after ending a session can vary. Saved schedules are not edited, but overnight readiness is NOT guaranteed. After an uncertain request controls turn off: check/cancel any pending Charge now in Hive before explicitly enabling again. Re-enabling does not cancel an earlier request. Do not use these buttons in automations.",
         "data": {
           "enable_experimental_controls": "Enable experimental commands (default off)",
-          "owner_confirmed_alfen": "I am the account owner and confirm this single charger is Alfen"
+          "owner_confirmed_alfen": "I am the account owner and confirm this single charger is Alfen",
+          "electricity_rate_sensor": "Electricity rate sensor (optional)",
+          "remove_cost_helper": "Remove cost helper and its selected rate sensor"
         }
       }
     },
     "error": {
       "alfen_confirmation_required": "Confirm ownership and the Alfen charger to enable commands.",
-      "single_charger_required": "Exactly one monitored charger is required for these beta controls."
+      "single_charger_required": "Exactly one monitored charger is required for these beta controls.",
+      "invalid_rate_sensor": "Select a sensor with a finite current unit price and supported explicit currency/kWh or currency/MWh unit. Ambiguous symbols and unavailable prices cannot enroll a new source."
     }
   }
 }

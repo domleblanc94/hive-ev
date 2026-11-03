@@ -1,6 +1,6 @@
-# Release candidate validation: 0.2.0b2
+# Release candidate validation
 
-Prepared 3 November 2026. The public beta source includes monitoring, two default-off experimental manual controls and explicit diagnostics. No release has been published and no GitHub destination is configured yet.
+Prepared 3 November 2026. The 0.2.0b2 baseline is retained below; 0.2.0b3 cost-helper checks are recorded separately. The public beta source includes monitoring, two default-off experimental manual controls and explicit diagnostics. No release has been published and no GitHub destination is configured yet.
 
 ## Automated checks
 
@@ -27,3 +27,13 @@ The Energy dashboard guide maps Charging power and the native optional cumulativ
 ## Native helper beta validation
 
 The final 0.2.0b2 framework run passed 21 cases (the prior 16 plus five energy-helper cases) in 20.99 seconds. Actual entity-registry default disablement, enabling, energy/kWh/total-increasing metadata, accumulation independent of session resets, save/load through HA restore storage across a 600-second gap, invalid/failure/long-gap handling and duplicate prevention passed. Native branding separately passed one HTTP case in 1.36 seconds. These use synthetic telemetry, not real charger commands. Rendered Energy dashboard selection and Recorder statistics end-to-end have not been exercised; owner installation and comparison during a normal charge remain next steps.
+
+## Current 0.2.0b3 selectable-cost validation
+
+- **70 offline checks pass** (the prior 56 plus 14 cost/math/entity/options checks). Fixtures are invented and HA interfaces are stubbed.
+- **35 actual Home Assistant runtime cases pass in 35.85 seconds** (the prior 21 plus 14 cost cases), using synthetic local price states and mocked Hive transport with declared Pyhive 1.0.10. No account, supplier or charger commands are sent to a real service.
+- Cost coverage includes native options selector enrollment/removal, preserving unrelated and experimental options, currency/unit scaling and rejection, event-split intervals, negative credits, restore storage without downtime credit, unavailable-price recovery, currency separation and power freshness independent of rate events. The actual Recorder case verifies signed five-minute state/sum, hourly rollup and a daily query returning the expected net cost including negative-rate credits. This goes beyond sensor metadata; it does not exercise rendered cards or compare a supplier bill.
+- The current install ZIP contains 39 whitelisted files, including 19 component files, with source-byte/privacy-marker/ZIP integrity checks. The prior native-brand test remains applicable because the PNG and delivery path are unchanged.
+- No exact b3 owner installation or rendered daily-cost card is claimed. Compare estimates during a normal charge and tariff boundary before relying on them; unavailable observations can undercount. Daily views require Recorder and sufficient recorded statistics.
+
+The native rate selector stores only a user-chosen local entity reference and currency in options. It contains no owner's EDF identifier and does not change saved Hive schedules or experimental command semantics. The standalone source/install/review artifacts are prepared locally; publication is still pending an actual project URL and owner review.

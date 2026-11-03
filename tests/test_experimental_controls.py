@@ -155,7 +155,7 @@ class CommandTests(unittest.IsolatedAsyncioTestCase):
         flow = flow_module.HiveEVOptionsFlow()
         flow.config_entry = SimpleNamespace(runtime_data=SimpleNamespace(data={"one": DEVICE}))
         result = await flow.async_step_init()
-        self.assertEqual(result["data_schema"]({}), {"enable_experimental_controls": False, "owner_confirmed_alfen": False})
+        self.assertEqual(result["data_schema"]({}), {"enable_experimental_controls": False, "owner_confirmed_alfen": False, "remove_cost_helper": False})
         rejected = await flow.async_step_init({"enable_experimental_controls": True, "owner_confirmed_alfen": False})
         self.assertIn("base", rejected["errors"])
         accepted = await flow.async_step_init(dict(OPTIONS))

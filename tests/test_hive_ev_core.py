@@ -224,6 +224,7 @@ def load_ha_modules():
     module("homeassistant.core", HomeAssistant=object)
     module("homeassistant.exceptions", ConfigEntryAuthFailed=AuthFailed)
     module("homeassistant.helpers")
+    module("homeassistant.helpers.selector", EntitySelector=lambda config: str, EntitySelectorConfig=dict)
     module("homeassistant.helpers.aiohttp_client", async_get_clientsession=lambda hass: None)
     module("homeassistant.helpers.update_coordinator", DataUpdateCoordinator=Coordinator, UpdateFailed=UpdateFailed)
     with patch.dict(sys.modules, modules):

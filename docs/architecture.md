@@ -27,6 +27,10 @@ flowchart LR
 
 `energy_helper.py` adds a default-disabled RestoreSensor when valid power is discovered. It exposes ENERGY, kWh and TOTAL_INCREASING metadata and explicitly marks the value as estimated/helper. It integrates the preceding reported power over successive UTC receipt timestamps. A valid stored kWh total restores independently of session Wh, while the first observation establishes a new baseline. Failed/missing observations clear the baseline; duplicate/reversed timestamps add nothing and intervals over 180 seconds are skipped. There are no extra network requests, timers, pricing dependencies or charger writes. See [Energy dashboard](energy-dashboard.md).
 
+## Optional cost estimation
+
+User-selected local electricity-rate data can feed a cumulative monetary estimate. Selection is optional and independent of experimental controls. Reported power and current rate observations determine intervals; rate changes split those intervals. Invalid readings and stale/unobserved intervals are skipped. Currency-specific identities prevent incompatible currencies from sharing a restored total. Negative tariffs are credits, so monetary statistics use TOTAL rather than TOTAL_INCREASING. No tariff/schedule settings or electricity-provider accounts are written. See [cost setup and daily views](energy-dashboard.md).
+
 ## Optional manual controls
 
 `config_flow.py` offers explicit owner/single-Alfen enrollment. Buttons load only when both options are true; new installations default to off. Upgrades retain existing options. Disabling/unloading invalidates old controllers and unloads active handlers. Historical registry entries may remain unavailable. Tests cover options changing while a preflight is suspended and re-enabled, so the old runtime cannot resume a command.

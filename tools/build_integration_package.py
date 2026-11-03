@@ -11,7 +11,7 @@ def main():
     required = {
         "__init__.py", "api.py", "auth.py", "config_flow.py", "const.py", "coordinator.py",
         "manifest.json", "sensor.py", "binary_sensor.py", "button.py", "controls.py",
-        "diagnostics.py", "diagnostic_shapes.py", "energy_helper.py", "strings.json",
+        "diagnostics.py", "diagnostic_shapes.py", "energy_helper.py", "cost_helper.py", "cost_math.py", "strings.json",
         "translations/en.json", "brand/icon.png",
     }
     missing = sorted(name for name in required if not (component / name).is_file())

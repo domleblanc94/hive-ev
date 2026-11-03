@@ -29,15 +29,38 @@ On builds before 0.2.0b2, create an Integral (Riemann sum) helper from Charging 
 
 Home Assistant documents the power-to-energy approach at https://www.home-assistant.io/docs/energy/individual-devices/ and https://www.home-assistant.io/integrations/integration/ .
 
-## Optional provider-neutral GBP cost package
+## Optional native charging cost helper (0.2.0b3)
 
-Energy and power are selected in the individual-device form; it has no unit-price/cost selector. The [optional cost package](../examples/energy_cost.yaml) is a separate manual HA configuration, not an option in Hive EV Configure. It has placeholders and no supplier-specific entity or meter identifiers. No cost helper is installed automatically.
+Open Settings → Devices & services → Hive EV → Configure. Choose **Electricity rate sensor (optional)** and save. Experimental charging controls can stay off. Leaving the rate selector unset creates no cost sensor. To disable cost tracking later, check **Remove cost helper and its selected rate sensor**, then save; historical registry/statistics records may remain. Use a current unit price in the sensor's numeric state, not a price stored only in an attribute, a whole-home cost total or standing charge. The source integration must update that state when the applicable tariff changes. One selected rate applies to every monitored charger in that integration entry; different per-charger tariffs are not configurable in this beta. No supplier or personal meter ID is built in. This reads the selected local HA sensor and does not call an electricity supplier or alter Hive's schedule.
 
-1. Replace sensor.your_ev_charger_power with your own Hive EV Charging power entity.
-2. Replace every sensor.your_current_electricity_price with your current unit-price entity. Recognised units are GBP/kWh, £/kWh, p/kWh, pence/kWh, GBp/kWh and GBP/MWh. Other units leave the cost rate unavailable. This is a GBP example, not a universal-currency configuration.
-3. Place the configured file under /config/packages/ and enable that directory in the EXISTING homeassistant packages configuration. Merge settings rather than duplicating homeassistant/packages sections; check configuration before restarting.
-4. Verify the generated EV charging cost rate entity ID. If an existing name causes a suffix, update the cost integration source to the actual ID. Do not install both a tailored private copy and this example.
+Supported units use an explicit supported ISO currency code followed by /kWh or /MWh, such as GBP/kWh, USD/kWh, EUR/kWh or GBP/MWh. Aliases £ and € represent GBP/EUR; p, pence and GBp represent GBP pence. kWh/MWh case matters. Ambiguous $ or cents and unrelated/missing units are rejected rather than guessed. The selected source must have a finite numeric price when enrolling; an existing enrolled source can recover after temporary unavailability without signing in again.
 
-This package creates a GBP/hour cost rate and cumulative GBP cost from sampled power at the contemporaneous unit price. The native energy helper supplies cumulative kWh separately. Add EV charging cost as a dashboard tile; no daily/monthly resets or historic billing import are automatic. Supported negative prices represent credits; standing charges and other fees are excluded. Estimates are not an invoice.
+Totals are kept separately by currency. Changing the selected source within the same currency continues that currency's total. A source that changes currency will not silently mix money units; reconfigure explicitly. Selecting another currency creates a separate currency-specific entity; reselect its card and avoid combining old/new currency totals.
 
-Do not multiply all accumulated energy by today's current rate across changing tariffs, or add EV energy as a second grid import beside a whole-house import. Keep configured packages and personal meter IDs outside the public repository/web uploads. There is no built-in price picker in this beta.
+The cost helper estimates cumulative charging spend from observed power and the applicable selected rate. It follows rate changes rather than multiplying all historical energy by today's rate. Negative rates can reduce the total as credits. Standing charges, losses outside charger-reported power and other fees are excluded. Missing prices/power, outages and skipped gaps cannot be recovered; an unavailable price transition may also discard the preceding partial interval conservatively; tracking starts when configured, with no import of previous sessions or bills.
+
+The monetary sensor belongs on a normal dashboard card. It is separate from the Energy dashboard's individual-device consumption chart; that chart has no price selector. Keep the kWh Energy dashboard helper selected for consumption.
+
+## Today's, weekly and monthly charging cost
+
+The cost sensor keeps a cumulative total. Home Assistant's Statistic card can show the **change** during a calendar day, week or month. Its daily view follows Home Assistant's configured local timezone and does not reset the source sensor. Recorder must include the cost entity; statistics update periodically and initially may have insufficient data. The first day starts when tracking was enabled, not at midnight retrospectively.
+
+On your normal dashboard choose Edit → Add card → Statistic, select the native Charging cost helper, choose Change and the calendar Day period. Check its actual entity ID in the charger device; generated IDs can differ. This YAML example uses a placeholder to replace with that ID:
+
+```yaml
+type: statistic
+entity: sensor.your_charging_cost_helper
+name: Today's EV charging cost
+stat_type: change
+period:
+  calendar:
+    period: day
+```
+
+For this week's/month's cost change day to week/month. A Tile card shows the running total instead. See [Home Assistant's Statistic card documentation](https://www.home-assistant.io/dashboards/statistic/).
+
+## Older manual GBP cost package
+
+The [optional YAML package](../examples/energy_cost.yaml) remains as a manual GBP-only alternative for older versions. It uses generic power and rate placeholders, with explicit GBP/pence conversions. It is not installed automatically. Prefer the native selectable cost helper in 0.2.0b3; do not install both and mistake their totals for separate charges. Previously configured personal packages stay outside this public repository.
+
+If retaining the old package, replace both placeholders, merge its package-directory settings into your existing HA configuration, check configuration before restart and verify the generated cost-rate entity ID matches the Integral source. Unsupported units make the cost rate unavailable; supported negative prices represent credits. There is no automatic migration/backfill from that manual package to the native helper.

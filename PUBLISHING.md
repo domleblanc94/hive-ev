@@ -12,7 +12,7 @@ local Git ignore protection.
 ## Review before publishing
 
 Read the code, [development record](docs/development-and-provenance.md) and
-[validation limits](docs/testing.md). The candidate is **0.2.0b2**, with monitoring and optional default-off experimental
+[validation limits](docs/testing.md). The candidate is **0.2.0b3**, with monitoring and optional default-off experimental
 manual controls. End session may require reconnection; Pause/resume, unattended
 control and automatic overnight readiness are not established.
 The implementation and tests were generated with OpenAI Codex; AI-agent review is
@@ -62,7 +62,7 @@ documentation link points to the real built-in Hive documentation; that page doe
 not document this unofficial EV extension. Do not invent maintainer identities,
 repository URLs, endorsement or HACS availability.
 
-Build the clean installation ZIP (`hive-ev-0.2.0b2.zip`) with `python tools/build_integration_package.py`
+Build the clean installation ZIP (`hive-ev-0.2.0b3.zip`) with `python tools/build_integration_package.py`
 if you want to attach it to a GitHub release. The generated `dist/` directory is
 ignored by Git. Do not upload APKs, decompiled code, raw diagnostic responses or
 personal screenshots as release attachments.
@@ -70,7 +70,7 @@ personal screenshots as release attachments.
 ## Publish this beta
 
 After review, publish the actual reviewed commit and create a GitHub release for
-version 0.2.0b2 with **Set as a pre-release** enabled. Use CHANGELOG.md and the
+version 0.2.0b3 with **Set as a pre-release** enabled. Use CHANGELOG.md and the
 release notes supplied with the review artifacts. Attach the clean installation
 ZIP and SHA-256 checksums; attach the source archive separately if useful. This
 repository does not automatically publish releases. A hosted CI run, when executed,

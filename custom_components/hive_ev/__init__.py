@@ -8,6 +8,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import HiveEVClient
 from .coordinator import HiveEVCoordinator
+from .const import COST_OPTIONS
 from .controls import CONTROL_OPTIONS, HiveEVControlClient, controls_enabled
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
@@ -27,7 +28,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.config_entries.async_update_entry(entry, options=options)
 
     coordinator.controls = HiveEVControlClient(client, lambda: entry.options, disable_controls)
-    coordinator.control_options = {key: entry.options.get(key) for key in CONTROL_OPTIONS}
+    coordinator.control_options = {key: entry.options.get(key) for key in (*CONTROL_OPTIONS, *COST_OPTIONS)}
     coordinator.loaded_platforms = PLATFORMS + ([Platform.BUTTON] if controls_enabled(entry.options) else [])
     entry.runtime_data = coordinator
     entry.async_on_unload(entry.add_update_listener(async_reload_options))
@@ -41,7 +42,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_reload_options(hass, entry):
-    current = {key: entry.options.get(key) for key in CONTROL_OPTIONS}
+    current = {key: entry.options.get(key) for key in (*CONTROL_OPTIONS, *COST_OPTIONS)}
     if current != entry.runtime_data.control_options:
         entry.runtime_data.controls.invalidate()
         await hass.config_entries.async_reload(entry.entry_id)

@@ -49,3 +49,7 @@ At the owner's request, the built-in image generator produced an original orange
 ## Native energy helper
 
 For 0.2.0b2 the owner requested a sensor supplied by Hive EV for the Energy dashboard, explicitly identified as a helper. Codex agents implemented and independently framework-tested a default-disabled, persistent kWh estimate from reported power. It uses no private EDF entity, price dependency or additional charger command. Supplier-specific optional cost configuration stays ignored locally; the public cost example uses generic placeholders.
+
+## Selectable cost helper
+
+For 0.2.0b3 the owner requested provider-neutral native cost tracking from a selected electricity-rate sensor and daily spend views. Codex agents implemented the optional configuration and independently tested it against synthetic Home Assistant entities. Public code contains no owner EDF entity. Daily/calendar views use standard HA statistics over the monetary total rather than resetting it. Detailed evidence and limits are recorded in testing and release validation.

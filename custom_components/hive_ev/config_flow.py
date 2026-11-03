@@ -9,10 +9,12 @@ import probatio
 from homeassistant.config_entries import SOURCE_REAUTH, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.selector import EntitySelector, EntitySelectorConfig
 
 from .api import HiveEVAuthError, HiveEVClient, HiveEVConnectionError, HiveEVError
 from .auth import HiveEVLogin
-from .const import DOMAIN, NAME
+from .const import DOMAIN, NAME, CONF_COST_RATE, CONF_COST_CURRENCY
+from .cost_math import normalize_rate
 
 
 class HiveEVConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -134,19 +136,40 @@ class HiveEVConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class HiveEVOptionsFlow(OptionsFlow):
-    """Explicit enrollment for a single owner-confirmed Alfen charger."""
+    """Optional local cost estimate and explicit experimental enrollment."""
 
     async def async_step_init(self, user_input=None):
         errors = {}
+        current = dict(getattr(self.config_entry, "options", {}))
         if user_input is not None:
             from .controls import controls_enabled
-            if user_input.get("enable_experimental_controls") and not controls_enabled(user_input):
+            options = {**current, **user_input}
+            remove_cost = options.pop("remove_cost_helper", False)
+            if remove_cost:
+                options.pop(CONF_COST_RATE, None)
+                options.pop(CONF_COST_CURRENCY, None)
+            elif user_input.get(CONF_COST_RATE):
+                selected = user_input[CONF_COST_RATE]
+                state = self.hass.states.get(selected)
+                rate = normalize_rate(state.state, state.attributes.get("unit_of_measurement")) if state else None
+                # Retain an enrolled source/currency through temporary unavailability;
+                # explicitly saving a now-valid new currency creates a separate total.
+                if rate is not None:
+                    options[CONF_COST_CURRENCY] = rate[0]
+                elif selected != current.get(CONF_COST_RATE) or not current.get(CONF_COST_CURRENCY):
+                    errors["base"] = "invalid_rate_sensor"
+            if options.get("enable_experimental_controls") and not controls_enabled(options):
                 errors["base"] = "alfen_confirmation_required"
-            elif user_input.get("enable_experimental_controls") and len(getattr(getattr(self.config_entry, "runtime_data", None), "data", None) or {}) != 1:
+            elif options.get("enable_experimental_controls") and len(getattr(getattr(self.config_entry, "runtime_data", None), "data", None) or {}) != 1:
                 errors["base"] = "single_charger_required"
-            else:
-                return self.async_create_entry(title="", data=user_input)
-        return self.async_show_form(step_id="init", data_schema=probatio.Schema({
-            probatio.Required("enable_experimental_controls", default=False): bool,
-            probatio.Required("owner_confirmed_alfen", default=False): bool,
-        }), errors=errors)
+            if not errors:
+                return self.async_create_entry(title="", data=options)
+        schema = {
+            probatio.Required("enable_experimental_controls", default=current.get("enable_experimental_controls", False)): bool,
+            probatio.Required("owner_confirmed_alfen", default=current.get("owner_confirmed_alfen", False)): bool,
+        }
+        rate_key = (probatio.Optional(CONF_COST_RATE, default=current[CONF_COST_RATE])
+                    if current.get(CONF_COST_RATE) else probatio.Optional(CONF_COST_RATE))
+        schema[rate_key] = EntitySelector(EntitySelectorConfig(domain="sensor"))
+        schema[probatio.Required("remove_cost_helper", default=False)] = bool
+        return self.async_show_form(step_id="init", data_schema=probatio.Schema(schema), errors=errors)

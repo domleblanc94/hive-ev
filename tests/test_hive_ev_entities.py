@@ -56,20 +56,22 @@ def load_entity_modules():
 
     module("homeassistant.components.sensor", SensorEntity=type("SensorEntity", (), {}), RestoreSensor=RestoreSensor,
            SensorEntityDescription=Description,
-           SensorDeviceClass=SimpleNamespace(POWER="power", ENERGY="energy", DURATION="duration", TIMESTAMP="timestamp"),
-           SensorStateClass=SimpleNamespace(MEASUREMENT="measurement", TOTAL_INCREASING="total_increasing"))
+           SensorDeviceClass=SimpleNamespace(POWER="power", ENERGY="energy", MONETARY="monetary", DURATION="duration", TIMESTAMP="timestamp"),
+           SensorStateClass=SimpleNamespace(MEASUREMENT="measurement", TOTAL_INCREASING="total_increasing", TOTAL="total"))
     module("homeassistant.components.binary_sensor", BinarySensorEntity=type("BinarySensorEntity", (), {}))
     module("homeassistant.const", UnitOfPower=SimpleNamespace(WATT="W"),
            UnitOfEnergy=SimpleNamespace(WATT_HOUR="Wh", KILO_WATT_HOUR="kWh"), UnitOfTime=SimpleNamespace(SECONDS="s"))
     module("homeassistant.core", callback=lambda f: f)
     module("homeassistant.helpers")
+    module("homeassistant.helpers.event", async_track_state_change_event=lambda *args: (lambda: None))
+    module("homeassistant.util", dt=SimpleNamespace(utcnow=lambda: datetime.now(timezone.utc)))
     module("homeassistant.helpers.entity", DeviceInfo=lambda **kw: kw,
            EntityCategory=SimpleNamespace(DIAGNOSTIC="diagnostic"))
     module("homeassistant.helpers.update_coordinator", CoordinatorEntity=CoordinatorEntity)
     root = Path(__file__).parents[1] / "custom_components" / "hive_ev"
     package = module("hive_ev_entity_test")
     package.__path__ = [str(root)]
-    module("hive_ev_entity_test.const", DOMAIN="hive_ev")
+    module("hive_ev_entity_test.const", DOMAIN="hive_ev", CONF_COST_RATE="electricity_rate_sensor", CONF_COST_CURRENCY="cost_currency")
     loaded = []
     with patch.dict(sys.modules, modules):
         for name in ("sensor", "binary_sensor"):
@@ -78,10 +80,12 @@ def load_entity_modules():
             spec.loader.exec_module(obj)
             loaded.append(obj)
         loaded.append(sys.modules["hive_ev_entity_test.energy_helper"])
+        loaded.append(sys.modules["hive_ev_entity_test.cost_helper"])
+        loaded.append(sys.modules["hive_ev_entity_test.cost_math"])
     return loaded
 
 
-sensor, binary, energy = load_entity_modules()
+sensor, binary, energy, cost, cost_math = load_entity_modules()
 
 
 @dataclass
