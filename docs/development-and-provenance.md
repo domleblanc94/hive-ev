@@ -41,3 +41,7 @@ The embedded application client key is shared application configuration, not a u
 ## Draft status
 
 This standalone beta source repository was assembled locally at the user's request. It is not a published hosted repository, a submitted upstream pull request or confirmed public support. The testing record distinguishes earlier command/state results from the later overnight charging evidence, including Hive-reported session energy. Specific token renewal events, detailed restart/registry checks and reliable readiness after Stop remain unverified; basic restart recovery is now user-reported. Update it as evidence changes; do not silently turn pending checks into verified claims.
+
+## Project artwork
+
+At the owner's request, the built-in image generator produced an original orange-and-white UNOFFICIAL HIVE EV project mark. The final PNG is copied unchanged into the custom component's native brand directory and used in the README. It is not the official Hive artwork or an endorsement. Native Home Assistant delivery was checked separately without contacting Hive. The original generation prompt and design output remain in the local design workspace.

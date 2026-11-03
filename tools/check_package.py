@@ -14,7 +14,7 @@ def main():
         "__init__.py", "api.py", "auth.py", "binary_sensor.py", "button.py",
         "config_flow.py", "const.py", "controls.py", "coordinator.py",
         "diagnostics.py", "diagnostic_shapes.py", "manifest.json", "sensor.py",
-        "strings.json", "translations/en.json",
+        "strings.json", "translations/en.json", "brand/icon.png",
     }
     expected = {"custom_components/hive_ev/" + name for name in component_names}
     expected.update({"README.md", "CHANGELOG.md", "CONTRIBUTING.md", "PUBLISHING.md",
@@ -31,6 +31,10 @@ def main():
             data = archive.read(name)
             if data != (root / name).read_bytes():
                 raise SystemExit("Installation archive differs from source: " + name)
+            if name == "custom_components/hive_ev/brand/icon.png":
+                if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+                    raise SystemExit("Integration brand icon is not a PNG")
+                continue
             text = data.decode("utf-8")
             if re.search(r"-----BEGIN [A-Z ]*PRIVATE KEY-----", text):
                 raise SystemExit("Private-key marker in package: " + name)

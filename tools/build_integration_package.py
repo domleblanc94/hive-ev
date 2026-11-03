@@ -12,11 +12,13 @@ def main():
         "__init__.py", "api.py", "auth.py", "config_flow.py", "const.py", "coordinator.py",
         "manifest.json", "sensor.py", "binary_sensor.py", "button.py", "controls.py",
         "diagnostics.py", "diagnostic_shapes.py", "strings.json",
-        "translations/en.json",
+        "translations/en.json", "brand/icon.png",
     }
     missing = sorted(name for name in required if not (component / name).is_file())
     if missing:
         raise SystemExit("Missing integration files: " + ", ".join(missing))
+    if not (component / "brand/icon.png").read_bytes().startswith(b"\x89PNG\r\n\x1a\n"):
+        raise SystemExit("Integration brand icon is not a PNG")
     files = [component / name for name in sorted(required)]
     docs = [root / name for name in ("README.md", "CONTRIBUTING.md", "PUBLISHING.md", "CHANGELOG.md")]
     docs.extend(sorted((root / "docs").glob("*.md")))

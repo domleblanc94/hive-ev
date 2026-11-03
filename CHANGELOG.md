@@ -4,6 +4,7 @@
 
 Not yet published. This is a beta with optional supervised controls.
 
+- Bundle the orange/white unofficial project icon through Home Assistant local branding and document Energy dashboard helper setup.
 - Retain reported status, session activity, optional power/session measurements, and 60-second monitoring.
 - Add default-off experimental Charge Now and End charging session buttons, explicitly limited to a single owner-confirmed Alfen and normal Custom/Tariff sessions.
 - Check fresh state, serialize commands, limit attempts, avoid write retries, and disable controls after uncertain delivery.

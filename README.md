@@ -1,5 +1,7 @@
 # Hive EV for Home Assistant
 
+<img src="custom_components/hive_ev/brand/icon.png" alt="Unofficial Hive EV logo" width="240">
+
 **0.2.0b1 — beta release candidate.** Monitor a Hive-connected EV charger and optionally enable two experimental manual controls: **Charge now** and **End charging session**. Controls are off on a new installation. Pause/resume and schedule editing are not included.
 
 Tested by one owner with a Hive-connected **Alfen NG910, firmware 5.8.1-4123**, using Home Assistant OS. The charger remains connected to Hive over its existing mobile connection; no local charger connection or backend change is required. Other charger models, Power+/DSR control and multiple-charger control are not validated. This is unofficial and is not endorsed by Hive, Alfen or Home Assistant.
@@ -14,7 +16,7 @@ Tested by one owner with a Hive-connected **Alfen NG910, firmware 5.8.1-4123**, 
 - Optional **Charge now (experimental)** and **End charging session (experimental)** buttons, with explicit owner/Alfen enrollment and fresh-state checks.
 - An explicit diagnostic download containing bounded technical shapes and redacted metadata, using the existing authenticated session.
 
-Session energy/duration reset between sessions. Session energy is not a lifetime energy total or an Energy dashboard consumption source.
+Session energy/duration reset between sessions. Session energy is not a lifetime energy total or an Energy dashboard consumption source. For the dashboard, use Charging power directly and create a cumulative kWh Integral helper; see [Energy dashboard and spend](docs/energy-dashboard.md).
 
 ## Install or upgrade
 
