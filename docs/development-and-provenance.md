@@ -45,3 +45,7 @@ This standalone beta source repository was assembled locally at the user's reque
 ## Project artwork
 
 At the owner's request, the built-in image generator produced an original orange-and-white UNOFFICIAL HIVE EV project mark. The final PNG is copied unchanged into the custom component's native brand directory and used in the README. It is not the official Hive artwork or an endorsement. Native Home Assistant delivery was checked separately without contacting Hive. The original generation prompt and design output remain in the local design workspace.
+
+## Native energy helper
+
+For 0.2.0b2 the owner requested a sensor supplied by Hive EV for the Energy dashboard, explicitly identified as a helper. Codex agents implemented and independently framework-tested a default-disabled, persistent kWh estimate from reported power. It uses no private EDF entity, price dependency or additional charger command. Supplier-specific optional cost configuration stays ignored locally; the public cost example uses generic placeholders.

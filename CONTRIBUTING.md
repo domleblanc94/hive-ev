@@ -14,7 +14,7 @@ python tools/build_integration_package.py
 python tools/check_package.py
 ```
 
-Activate `.venv` before running the remaining commands (`.venv\Scripts\Activate.ps1` on Windows, `source .venv/bin/activate` on Linux/macOS). These 45 checks use Home Assistant stubs and invented data. They must not sign in, request SMS or contact a real account/charger.
+Activate `.venv` before running the remaining commands (`.venv\Scripts\Activate.ps1` on Windows, `source .venv/bin/activate` on Linux/macOS). These 56 checks use Home Assistant stubs and invented data. They must not sign in, request SMS or contact a real account/charger.
 
 The separate actual Home Assistant pytest harness lives in `tests/runtime/`, outside offline discovery. Its README explains copying the test into a suitable Core framework checkout and using HIVE_EV_SOURCE_DIR. It requires the real Home Assistant test environment and the component's declared released Pyhive 1.0.10 dependency. Do not install the unpublished upstream-library draft as a substitute.
 
@@ -27,6 +27,7 @@ The packaging script whitelists component files, public docs and licence notices
 | config_flow.py / auth.py | Owner sign-in, SMS, trusted-device consent, options and normal renewal |
 | api.py / coordinator.py | Authenticated monitoring, reported parsing and unavailable/reauth state |
 | sensor.py / binary_sensor.py | Stable monitoring entities and late optional telemetry |
+| energy_helper.py | Default-disabled cumulative kWh estimate, restore and observation-gap handling |
 | controls.py / button.py | Fresh guarded manual writes, attempt limits, uncertain-delivery opt-out |
 | diagnostics.py / diagnostic_shapes.py | Explicit bounded technical diagnostics and redaction |
 | tests/ | Synthetic offline suite; tests/runtime/ is the separate real-framework harness |

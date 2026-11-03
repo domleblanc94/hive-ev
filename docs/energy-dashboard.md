@@ -1,40 +1,43 @@
 # Energy dashboard and EV charging spend
 
-## Map the Add a device fields
+## Native Energy dashboard helper (0.2.0b2)
 
-| Home Assistant field | Select |
+Hive EV supplies an optional sensor named **Energy dashboard helper**. It is a cumulative **kWh estimate** derived from reported charging power, with energy/total-increasing statistics metadata so Home Assistant can offer it directly in the Energy dashboard. It is independent of electricity supplier and price sensors.
+
+The helper is disabled by default. Open Settings → Devices & services → Hive EV → the charger device, show disabled entities, open Energy dashboard helper and enable it. Alternatively find the disabled entity under Settings → Devices & services → Entities, filtered to Hive EV. Wait for successful power updates/statistics before selecting it.
+
+| Add a device field | Select |
 |---|---|
-| Device energy consumption | A cumulative kWh Integral helper created from Charging power, as below |
-| Device power consumption | Hive EV Charging power, normally sensor.ev_charger_charging_power |
-| Display name | EV charger, or a name of your choice |
-| Upstream device | Leave empty unless an actual parent circuit/device meter already includes this EV consumption |
+| Device energy consumption | Hive EV Energy dashboard helper (kWh) |
+| Device power consumption | Hive EV Charging power (W) |
+| Display name | EV charger, or your preferred name |
+| Upstream device | Leave empty unless a real parent device/circuit meter already includes this EV usage |
 
-Do not select the heated airer as upstream just because both devices are in the garage. This field represents a metering hierarchy, not a location.
+Do not select the heated airer as upstream merely because it shares the garage location. The upstream field describes a metering hierarchy.
 
-The integration's Session energy counter resets for a new session and intentionally has no long-term state class. It is not suitable for direct selection in the cumulative energy field. Do not change its state class to force it into the dropdown.
+## What the helper measures
 
-## Create the cumulative energy helper
+It estimates energy from valid power samples at the normal cloud polling interval. Its total persists across charging-session resets and restores after a Home Assistant restart. It does not replay unobserved offline time. Invalid/missing power, failures, removed nodes, reversed time and long observation gaps cannot create invented consumption. Tracking starts when enabled, and lost observations are not reconstructed from the session counter.
 
-In Settings → Devices & services → Helpers → Create helper, choose Integral (Riemann sum).
+The helper is not the charger's lifetime/billing meter. Sampling, cloud delays, skipped gaps and outages affect accuracy; compare it with Session energy after a normal charge. Session energy is still the provider's per-session Wh counter and intentionally is not offered directly as a cumulative statistics source. Do not change its state class to force it into the dropdown.
 
-- Name: EV charging energy.
-- Input sensor: Hive EV Charging power.
-- Integral method: Left.
-- Metric prefix: k (kilo).
-- Integration time: h (hours).
-- Precision: 3.
-- Max sub-interval: 00:01:00 (one minute), if offered.
+Disable/re-enable and restart preserve the helper total when its valid stored state is available. Changing entity identity, deleting stored data or restoring an older HA backup can affect the total. Do not expect automatic backfill of the previously observed 7.11 kWh or charging while HA was offline.
 
-Power is supplied in W; the k prefix and hours produce kWh. The helper retains its accumulated value across Home Assistant restarts. After it has a valid reading, choose that helper in Device energy consumption and Charging power in Device power consumption.
+## Older versions / alternative manual helper
 
-This is an estimate from sampled power, not the charger's original Wh counter. A one-minute cloud poll, outages, missed transitions and Home Assistant downtime can affect accuracy. It begins when configured; it does not automatically import earlier Hive energy or the already-observed 7.11 kWh. Keep Session energy available for comparison after a normal session. Statistics/dashboard display can take time to appear after the first valid samples.
+On builds before 0.2.0b2, create an Integral (Riemann sum) helper from Charging power in Settings → Devices & services → Helpers. Use Left method, kilo prefix, hours, precision 3 and a one-minute max sub-interval. That also estimates cumulative kWh. Prefer the native helper on the new beta; do not add both totals as separate EV devices, which would duplicate the same usage.
 
-Home Assistant documents this power-to-energy approach at https://www.home-assistant.io/docs/energy/individual-devices/ and https://www.home-assistant.io/integrations/integration/ .
+Home Assistant documents the power-to-energy approach at https://www.home-assistant.io/docs/energy/individual-devices/ and https://www.home-assistant.io/integrations/integration/ .
 
-## EV-only spend
+## Optional provider-neutral GBP cost package
 
-The individual-device form shown here has energy and power fields, not a unit-price input. Track energy there first. EV-only cost needs consumption allocated at the price applicable when the energy was used, using the owner's existing tariff/price sensors and their actual units. Current £/kWh, p/kWh, or per-MWh prices require different conversions; a household daily cost sensor is not a unit price.
+Energy and power are selected in the individual-device form; it has no unit-price/cost selector. The [optional cost package](../examples/energy_cost.yaml) is a separate manual HA configuration, not an option in Hive EV Configure. It has placeholders and no supplier-specific entity or meter identifiers. No cost helper is installed automatically.
 
-Do not multiply all accumulated EV energy by today's current rate when day/night or dynamic prices differ. Do not add EV consumption as another grid import on top of an existing whole-house import just to obtain a cost display, because that counts the same electricity twice. Any later EV cost helper should be configured separately with known price sensor IDs/units and tariff timing.
+1. Replace sensor.your_ev_charger_power with your own Hive EV Charging power entity.
+2. Replace every sensor.your_current_electricity_price with your current unit-price entity. Recognised units are GBP/kWh, £/kWh, p/kWh, pence/kWh, GBp/kWh and GBP/MWh. Other units leave the cost rate unavailable. This is a GBP example, not a universal-currency configuration.
+3. Place the configured file under /config/packages/ and enable that directory in the EXISTING homeassistant packages configuration. Merge settings rather than duplicating homeassistant/packages sections; check configuration before restarting.
+4. Verify the generated EV charging cost rate entity ID. If an existing name causes a suffix, update the cost integration source to the actual ID. Do not install both a tailored private copy and this example.
 
-The project does not yet create an energy/cost accumulator automatically. No guessed tariff, helper, sensor or automation has been installed on the owner's Home Assistant by this guide.
+This package creates a GBP/hour cost rate and cumulative GBP cost from sampled power at the contemporaneous unit price. The native energy helper supplies cumulative kWh separately. Add EV charging cost as a dashboard tile; no daily/monthly resets or historic billing import are automatic. Supported negative prices represent credits; standing charges and other fees are excluded. Estimates are not an invoice.
+
+Do not multiply all accumulated energy by today's current rate across changing tariffs, or add EV energy as a second grid import beside a whole-house import. Keep configured packages and personal meter IDs outside the public repository/web uploads. There is no built-in price picker in this beta.

@@ -1,6 +1,7 @@
 """Release runtime checks using actual HA; invented HTTP responses only."""
 
 import asyncio
+from datetime import timedelta
 import os
 import json
 from types import SimpleNamespace
@@ -9,7 +10,8 @@ import shutil
 import time
 
 import pytest
-from pytest_homeassistant.common import MockConfigEntry
+from freezegun.api import FrozenDateTimeFactory
+from pytest_homeassistant.common import MockConfigEntry, async_mock_restore_state_shutdown_restart
 from pytest_homeassistant.test_util.aiohttp import AiohttpClientMocker
 
 from homeassistant.core import HomeAssistant
@@ -491,3 +493,147 @@ async def test_diagnostics_cancel_propagates(hass: HomeAssistant, prototype_entr
         await module.async_get_config_entry_diagnostics(hass, prototype_entry)
     assert len(prototype_http.mock_calls) == 1
     assert prototype_http.mock_calls[0][0].upper() == "GET"
+
+
+async def enable_energy_helper(hass: HomeAssistant, entry: MockConfigEntry,
+    registry: er.EntityRegistry) -> str:
+    """Enable the registered optional entity through HA, then reload normally."""
+    entity_id = registry.async_get_entity_id("sensor", DOMAIN, "runtime-evse_energy_dashboard_helper")
+    assert entity_id is not None
+    registry.async_update_entity(entity_id, disabled_by=None)
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    return entity_id
+
+
+def energy_feature(nodes: dict) -> dict:
+    """Use ordinary reported telemetry, independent of session counters."""
+    return nodes["nodes"][0]["features"]["ev_supply_equipment_v1"]
+
+
+async def tick_refresh(hass: HomeAssistant, entry: MockConfigEntry,
+    freezer: FrozenDateTimeFactory, seconds: int) -> None:
+    """Advance receipt time and perform the normal coordinator HTTP refresh."""
+    freezer.tick(timedelta(seconds=seconds))
+    await entry.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+
+
+async def test_energy_helper_optional_registry_and_metadata(hass: HomeAssistant,
+    prototype_entry: MockConfigEntry, prototype_http: AiohttpClientMocker,
+    entity_registry: er.EntityRegistry) -> None:
+    """The helper requires explicit entity enabling and exposes valid energy metadata."""
+    await load_entry(hass, prototype_entry)
+    helper_id = entity_registry.async_get_entity_id("sensor", DOMAIN, "runtime-evse_energy_dashboard_helper")
+    assert helper_id is not None
+    registered = entity_registry.async_get(helper_id)
+    assert registered is not None
+    assert registered.disabled_by is er.RegistryEntryDisabler.INTEGRATION
+    assert hass.states.get(helper_id) is None
+    assert not prototype_entry.options
+    helper_id = await enable_energy_helper(hass, prototype_entry, entity_registry)
+    state = hass.states.get(helper_id)
+    assert state is not None
+    assert float(state.state) == 0
+    assert state.attributes["device_class"] == "energy"
+    assert state.attributes["unit_of_measurement"] == "kWh"
+    assert state.attributes["state_class"] == "total_increasing"
+    assert state.attributes["estimated"] is True and state.attributes["helper"] is True
+    assert {call[0].upper() for call in prototype_http.mock_calls} == {"GET"}
+    assert not [entity for entity in entity_registry.entities.values() if entity.platform == DOMAIN and entity.domain == "button"]
+
+
+async def test_energy_helper_accumulates_across_session_reset(hass: HomeAssistant,
+    prototype_entry: MockConfigEntry, prototype_http: AiohttpClientMocker,
+    prototype_nodes: dict, entity_registry: er.EntityRegistry, freezer: FrozenDateTimeFactory) -> None:
+    """Two observed7000W minute intervals add energy without copying resettable counters."""
+    feature = energy_feature(prototype_nodes)
+    feature["transactionActivePowerImportW"]["reportedValue"] = 7000
+    feature["transactionEnergyTotalWh"] = {"reportedValue": 5000}
+    set_http(prototype_http, prototype_nodes)
+    await load_entry(hass, prototype_entry)
+    helper_id = await enable_energy_helper(hass, prototype_entry, entity_registry)
+    await tick_refresh(hass, prototype_entry, freezer, 60)
+    assert float(hass.states.get(helper_id).state) == pytest.approx(7000 / 60000, abs=1e-6)
+    feature["transactionEnergyTotalWh"]["reportedValue"] = 0
+    feature["transactionChargeTimeSeconds"] = {"reportedValue": 0}
+    set_http(prototype_http, prototype_nodes)
+    await tick_refresh(hass, prototype_entry, freezer, 60)
+    assert float(hass.states.get(helper_id).state) == pytest.approx(2 * 7000 / 60000, abs=1e-6)
+    assert len([entity for entity in entity_registry.entities.values() if entity.platform == DOMAIN and entity.unique_id == "runtime-evse_energy_dashboard_helper"]) == 1
+
+
+async def test_energy_helper_restore_never_backfills_offline_interval(hass: HomeAssistant,
+    prototype_entry: MockConfigEntry, prototype_http: AiohttpClientMocker,
+    prototype_nodes: dict, entity_registry: er.EntityRegistry, freezer: FrozenDateTimeFactory) -> None:
+    """HA restore storage preserves the total and starts a new baseline after downtime."""
+    energy_feature(prototype_nodes)["transactionActivePowerImportW"]["reportedValue"] = 7000
+    set_http(prototype_http, prototype_nodes)
+    await load_entry(hass, prototype_entry)
+    helper_id = await enable_energy_helper(hass, prototype_entry, entity_registry)
+    await tick_refresh(hass, prototype_entry, freezer, 60)
+    before = float(hass.states.get(helper_id).state)
+    assert await hass.config_entries.async_unload(prototype_entry.entry_id)
+    await async_mock_restore_state_shutdown_restart(hass)
+    freezer.tick(timedelta(seconds=600))
+    assert await hass.config_entries.async_setup(prototype_entry.entry_id)
+    await hass.async_block_till_done()
+    assert float(hass.states.get(helper_id).state) == pytest.approx(before, abs=1e-6)
+    await tick_refresh(hass, prototype_entry, freezer, 60)
+    assert float(hass.states.get(helper_id).state) == pytest.approx(before + 7000 / 60000, abs=1e-6)
+    assert len([entity for entity in entity_registry.entities.values() if entity.platform == DOMAIN and entity.unique_id == "runtime-evse_energy_dashboard_helper"]) == 1
+
+
+async def test_energy_helper_unknown_failure_and_gap_skip_energy(hass: HomeAssistant,
+    prototype_entry: MockConfigEntry, prototype_http: AiohttpClientMocker,
+    prototype_nodes: dict, entity_registry: er.EntityRegistry, freezer: FrozenDateTimeFactory) -> None:
+    """Invalid data and failed/gapped polls do not manufacture missing energy."""
+    feature = energy_feature(prototype_nodes)
+    feature["transactionActivePowerImportW"]["reportedValue"] = 7000
+    set_http(prototype_http, prototype_nodes)
+    await load_entry(hass, prototype_entry)
+    helper_id = await enable_energy_helper(hass, prototype_entry, entity_registry)
+    await tick_refresh(hass, prototype_entry, freezer, 60)
+    before = float(hass.states.get(helper_id).state)
+    del feature["transactionActivePowerImportW"]["reportedValue"]
+    set_http(prototype_http, prototype_nodes)
+    await tick_refresh(hass, prototype_entry, freezer, 60)
+    assert hass.states.get(helper_id).state == "unavailable"
+    feature["transactionActivePowerImportW"]["reportedValue"] = 7000
+    set_http(prototype_http, prototype_nodes)
+    await tick_refresh(hass, prototype_entry, freezer, 60)
+    assert float(hass.states.get(helper_id).state) == pytest.approx(before, abs=1e-6)
+    prototype_http.clear_requests()
+    prototype_http.get("https://hive.bgchprod.info/home/owner/runtime-account", status=503)
+    await tick_refresh(hass, prototype_entry, freezer, 60)
+    assert hass.states.get(helper_id).state == "unavailable"
+    set_http(prototype_http, prototype_nodes)
+    await tick_refresh(hass, prototype_entry, freezer, 60)
+    assert float(hass.states.get(helper_id).state) == pytest.approx(before, abs=1e-6)
+    await tick_refresh(hass, prototype_entry, freezer, 240)
+    assert float(hass.states.get(helper_id).state) == pytest.approx(before, abs=1e-6)
+    await tick_refresh(hass, prototype_entry, freezer, 60)
+    assert float(hass.states.get(helper_id).state) == pytest.approx(before + 7000 / 60000, abs=1e-6)
+    assert {call[0].upper() for call in prototype_http.mock_calls} == {"GET"}
+
+
+async def test_energy_helper_late_power_has_one_disabled_candidate(hass: HomeAssistant,
+    prototype_entry: MockConfigEntry, prototype_http: AiohttpClientMocker,
+    prototype_nodes: dict, entity_registry: er.EntityRegistry) -> None:
+    """An initially missing reading never invents a source or duplicate helper."""
+    feature = energy_feature(prototype_nodes)
+    del feature["transactionActivePowerImportW"]["reportedValue"]
+    set_http(prototype_http, prototype_nodes)
+    await load_entry(hass, prototype_entry)
+    assert entity_registry.async_get_entity_id("sensor", DOMAIN, "runtime-evse_energy_dashboard_helper") is None
+    feature["transactionActivePowerImportW"]["reportedValue"] = 0
+    set_http(prototype_http, prototype_nodes)
+    await prototype_entry.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+    await prototype_entry.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+    helper_id = entity_registry.async_get_entity_id("sensor", DOMAIN, "runtime-evse_energy_dashboard_helper")
+    assert helper_id is not None
+    assert entity_registry.async_get(helper_id).disabled_by is er.RegistryEntryDisabler.INTEGRATION
+    assert hass.states.get(helper_id) is None
+    assert len([entity for entity in entity_registry.entities.values() if entity.platform == DOMAIN and entity.unique_id == "runtime-evse_energy_dashboard_helper"]) == 1

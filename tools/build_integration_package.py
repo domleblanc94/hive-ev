@@ -11,7 +11,7 @@ def main():
     required = {
         "__init__.py", "api.py", "auth.py", "config_flow.py", "const.py", "coordinator.py",
         "manifest.json", "sensor.py", "binary_sensor.py", "button.py", "controls.py",
-        "diagnostics.py", "diagnostic_shapes.py", "strings.json",
+        "diagnostics.py", "diagnostic_shapes.py", "energy_helper.py", "strings.json",
         "translations/en.json", "brand/icon.png",
     }
     missing = sorted(name for name in required if not (component / name).is_file())
@@ -22,6 +22,7 @@ def main():
     files = [component / name for name in sorted(required)]
     docs = [root / name for name in ("README.md", "CONTRIBUTING.md", "PUBLISHING.md", "CHANGELOG.md")]
     docs.extend(sorted((root / "docs").glob("*.md")))
+    docs.append(root / "examples/energy_cost.yaml")
     if any(not path.is_file() for path in docs):
         raise SystemExit("Installation instructions are missing")
     notices = [root / name for name in ("LICENSE", "THIRD_PARTY_NOTICES.md", "licenses/Pyhive-MIT.txt")]

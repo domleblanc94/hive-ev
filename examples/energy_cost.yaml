@@ -1,0 +1,35 @@
+# Optional provider-neutral GBP cost example: replace both source placeholders.
+# Enable Hive EV Energy dashboard helper separately for cumulative kWh.
+template:
+- sensor:
+  - name: EV charging cost rate
+    unique_id: hive_ev_estimated_cost_rate
+    unit_of_measurement: GBP/h
+    state_class: measurement
+    availability: '{% set p = states(''sensor.your_ev_charger_power'') %}
+
+      {% set r = states(''sensor.your_current_electricity_price'') %}
+
+      {% set u = (state_attr(''sensor.your_current_electricity_price'', ''unit_of_measurement'') or '''') | string
+      | replace('' '', '''') %}
+
+      {% set factor = {''GBP/kWh'': 1, ''£/kWh'': 1, ''p/kWh'': 0.01, ''pence/kWh'': 0.01, ''GBp/kWh'': 0.01, ''GBP/MWh'':
+      0.001}.get(u) %}
+
+      {{ is_number(p) and p | float(0) >= 0 and (p | float(0) == 0 or (is_number(r) and factor is not none)) }}'
+    state: "{% set p = states('sensor.your_ev_charger_power') %}\n{% set r = states('sensor.your_current_electricity_price')\
+      \ %}\n{% set u = (state_attr('sensor.your_current_electricity_price', 'unit_of_measurement') or '') | string\
+      \ | replace(' ', '') %}\n{% set factor = {'GBP/kWh': 1, '£/kWh': 1, 'p/kWh': 0.01, 'pence/kWh': 0.01, 'GBp/kWh':\
+      \ 0.01, 'GBP/MWh': 0.001}.get(u) %}\n{% if is_number(p) and p | float(0) == 0 %}\n  {{ 0 }}\n{% elif is_number(p)\
+      \ and p | float(0) > 0 and is_number(r) and factor is not none %}\n  {{ ((p | float) / 1000 * (r | float)\
+      \ * factor) | round(6) }}\n{% else %}\n  {{ none }}\n{% endif %}"
+sensor:
+- platform: integration
+  source: sensor.ev_charging_cost_rate
+  name: EV charging cost
+  unique_id: hive_ev_estimated_cost
+  unit_time: h
+  method: left
+  round: 4
+  max_sub_interval:
+    minutes: 1

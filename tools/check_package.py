@@ -13,12 +13,13 @@ def main():
     component_names = {
         "__init__.py", "api.py", "auth.py", "binary_sensor.py", "button.py",
         "config_flow.py", "const.py", "controls.py", "coordinator.py",
-        "diagnostics.py", "diagnostic_shapes.py", "manifest.json", "sensor.py",
+        "diagnostics.py", "diagnostic_shapes.py", "energy_helper.py", "manifest.json", "sensor.py",
         "strings.json", "translations/en.json", "brand/icon.png",
     }
     expected = {"custom_components/hive_ev/" + name for name in component_names}
     expected.update({"README.md", "CHANGELOG.md", "CONTRIBUTING.md", "PUBLISHING.md",
-                     "LICENSE", "THIRD_PARTY_NOTICES.md", "licenses/Pyhive-MIT.txt"})
+                     "LICENSE", "THIRD_PARTY_NOTICES.md", "licenses/Pyhive-MIT.txt",
+                     "examples/energy_cost.yaml"})
     expected.update(path.relative_to(root).as_posix() for path in (root / "docs").glob("*.md"))
     with zipfile.ZipFile(package) as archive:
         names = archive.namelist()

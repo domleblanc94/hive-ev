@@ -1,8 +1,8 @@
 # Actual Home Assistant runtime checks
 
-These 16 pytest cases use the real Home Assistant framework with only HTTP transport mocked. They are separate from the repository's default offline unittest suite, which uses minimal framework stubs. Do not mix the two suites in one Python process.
+These 21 pytest cases use the real Home Assistant framework with only HTTP transport mocked. They are separate from the repository's default offline unittest suite, which uses minimal framework stubs. Do not mix the two suites in one Python process.
 
-The cases cover default-off controls, explicit owner/Alfen enrollment, options reload and opt-out, shared client/token behavior, fresh guards, single-attempt command handling, error/timeout disablement, suspended opt-out/re-enable races, distinct End-session binding without optimistic state changes, and bounded/redacted diagnostics discovered through Home Assistant's normal platform loader. All accounts, tokens, devices and replies are invented. Unregistered HTTP requests fail. The tests do not validate real charging, account sign-in, token renewal, all charger models or Pause.
+The cases cover an explicitly enabled Energy Dashboard helper with ENERGY/kWh/TOTAL_INCREASING metadata, power accumulation across session resets, HA restore storage without downtime backfill, unavailable/failure/gap handling and discovery without duplicates. They also cover default-off controls, explicit owner/Alfen enrollment, options reload and opt-out, shared client/token behavior, fresh guards, single-attempt command handling, error/timeout disablement, suspended opt-out/re-enable races, distinct End-session binding without optimistic state changes, and bounded/redacted diagnostics discovered through Home Assistant's normal platform loader. All accounts, tokens, devices and replies are invented. Unregistered HTTP requests fail. The tests do not validate real charging, account sign-in, token renewal, all charger models or Pause.
 
 ## Run in a supported Core test environment
 

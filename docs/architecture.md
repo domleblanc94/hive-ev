@@ -23,6 +23,10 @@ flowchart LR
     Client --> Shapes
 ```
 
+## Optional Energy dashboard estimate
+
+`energy_helper.py` adds a default-disabled RestoreSensor when valid power is discovered. It exposes ENERGY, kWh and TOTAL_INCREASING metadata and explicitly marks the value as estimated/helper. It integrates the preceding reported power over successive UTC receipt timestamps. A valid stored kWh total restores independently of session Wh, while the first observation establishes a new baseline. Failed/missing observations clear the baseline; duplicate/reversed timestamps add nothing and intervals over 180 seconds are skipped. There are no extra network requests, timers, pricing dependencies or charger writes. See [Energy dashboard](energy-dashboard.md).
+
 ## Optional manual controls
 
 `config_flow.py` offers explicit owner/single-Alfen enrollment. Buttons load only when both options are true; new installations default to off. Upgrades retain existing options. Disabling/unloading invalidates old controllers and unloads active handlers. Historical registry entries may remain unavailable. Tests cover options changing while a preflight is suspended and re-enabled, so the old runtime cannot resume a command.

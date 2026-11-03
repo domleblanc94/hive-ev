@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0b2 — Energy dashboard helper, prepared 3 November 2026
+
+Not yet published.
+
+- Add an optional, disabled-by-default Energy dashboard helper with energy/total-increasing metadata in kWh, estimated from reported charging power.
+- Restore its cumulative total across restarts, independently of session counters; skip missing observations and long gaps instead of backfilling.
+- Supply a provider-neutral optional GBP cost-package example. No electricity supplier or personal price entity is configured in the component.
+- Keep Charge Now and End session semantics unchanged.
+
 ## 0.2.0b1 — release candidate prepared 3 November 2026
 
 Not yet published. This is a beta with optional supervised controls.

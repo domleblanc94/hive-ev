@@ -29,6 +29,12 @@ class CoordinatorEntity:
     def __init__(self, coordinator):
         self.coordinator = coordinator
 
+    async def async_added_to_hass(self):
+        pass
+
+    def _handle_coordinator_update(self):
+        pass
+
     @property
     def available(self):
         return self.coordinator.last_update_success
@@ -44,13 +50,17 @@ def load_entity_modules():
 
     module("homeassistant")
     module("homeassistant.components")
-    module("homeassistant.components.sensor", SensorEntity=type("SensorEntity", (), {}),
+    class RestoreSensor:
+        async def async_get_last_sensor_data(self):
+            return None
+
+    module("homeassistant.components.sensor", SensorEntity=type("SensorEntity", (), {}), RestoreSensor=RestoreSensor,
            SensorEntityDescription=Description,
            SensorDeviceClass=SimpleNamespace(POWER="power", ENERGY="energy", DURATION="duration", TIMESTAMP="timestamp"),
-           SensorStateClass=SimpleNamespace(MEASUREMENT="measurement"))
+           SensorStateClass=SimpleNamespace(MEASUREMENT="measurement", TOTAL_INCREASING="total_increasing"))
     module("homeassistant.components.binary_sensor", BinarySensorEntity=type("BinarySensorEntity", (), {}))
     module("homeassistant.const", UnitOfPower=SimpleNamespace(WATT="W"),
-           UnitOfEnergy=SimpleNamespace(WATT_HOUR="Wh"), UnitOfTime=SimpleNamespace(SECONDS="s"))
+           UnitOfEnergy=SimpleNamespace(WATT_HOUR="Wh", KILO_WATT_HOUR="kWh"), UnitOfTime=SimpleNamespace(SECONDS="s"))
     module("homeassistant.core", callback=lambda f: f)
     module("homeassistant.helpers")
     module("homeassistant.helpers.entity", DeviceInfo=lambda **kw: kw,
@@ -67,10 +77,11 @@ def load_entity_modules():
             obj = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(obj)
             loaded.append(obj)
+        loaded.append(sys.modules["hive_ev_entity_test.energy_helper"])
     return loaded
 
 
-sensor, binary = load_entity_modules()
+sensor, binary, energy = load_entity_modules()
 
 
 @dataclass
@@ -151,10 +162,10 @@ class EntityTests(unittest.TestCase):
         self.coordinator.data[self.device.node_id] = replace(self.device, power_w=7200, session_energy_wh=0)
         for listener in self.coordinator.listeners:
             listener()
-        self.assertEqual(len(entities), 4)
+        self.assertEqual(len(entities), 5)
         for listener in self.coordinator.listeners:
             listener()
-        self.assertEqual(len(entities), 4)
+        self.assertEqual(len(entities), 5)
         unload[0]()
         self.assertEqual(self.coordinator.listeners, [])
 

@@ -16,6 +16,7 @@ from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
+from .energy_helper import HiveEVEnergyDashboardHelper, valid_sample
 
 if TYPE_CHECKING:
     from .coordinator import HiveEVCoordinator
@@ -59,6 +60,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
                     continue
                 added.add(identity)
                 entities.append(HiveEVSensor(coordinator, node_id, description))
+            identity = (node_id, "energy_dashboard_helper")
+            if identity not in added and valid_sample(device.power_w, device.last_updated):
+                added.add(identity)
+                entities.append(HiveEVEnergyDashboardHelper(coordinator, node_id))
         if entities:
             async_add_entities(entities)
 

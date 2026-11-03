@@ -128,7 +128,7 @@ class HiveEVControlClient:
             headers = {"Authorization": "Bearer " + self.client._tokens["id_token"],
                        "Accept": NODE_ACCEPT, "Content-Type": "application/json",
                        "X-AlertMe-Client": "Honeycomb React Native App",
-                       "User-Agent": "HomeAssistant-HiveEV/0.2.0b1"}
+                       "User-Agent": "HomeAssistant-HiveEV/0.2.0b2"}
             url = WRITE_BASE + quote(node_id, safe="") + "?homeId=" + quote(home_id, safe="")
             # Consume before entering transport: even timeout/cancellation may follow delivery.
             self._attempted_actions.add(action)

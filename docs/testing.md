@@ -1,11 +1,11 @@
 # Testing and validation record
 
-Updated 3 November 2026 for beta candidate 0.2.0b1. The public custom component contains optional experimental controls; the separate upstream library/Core drafts remain monitoring-only. Raw owner diagnostics, screenshots and CSVs are not included in fixtures or packages.
+Updated 3 November 2026 for beta candidate 0.2.0b2. The public custom component contains optional experimental controls; the separate upstream library/Core drafts remain monitoring-only. Raw owner diagnostics, screenshots and CSVs are not included in fixtures or packages.
 
 ## Automated release-candidate checks
 
-- **45 offline tests passed:** 20 original monitoring/auth/flow/entity checks, 16 control checks and nine diagnostic privacy/read-only checks. Home Assistant interfaces are stubbed; the declared Pyhive dependency is installed. Fixtures and credentials are invented.
-- **16 genuine Home Assistant tests passed in 13.25 seconds:** Linux Python 3.14.10 with released `pyhive-integration==1.0.10`, loading the public source in pytest's temporary configuration directory. HTTP transport and token metadata are synthetic; no real account, Cognito or charger calls occur. See `tests/runtime/README.md` for the separate framework reproduction setup.
+- **56 offline tests passed:** 20 original monitoring/auth/flow/entity checks, 16 control checks, nine diagnostic privacy/read-only checks and 11 energy-helper checks. Home Assistant interfaces are stubbed; the declared Pyhive dependency is installed. Fixtures and credentials are invented.
+- **21 genuine Home Assistant tests passed in 20.99 seconds:** Linux Python 3.14.10 with released `pyhive-integration==1.0.10`, loading the public source in pytest's temporary configuration directory. HTTP transport and token metadata are synthetic; no real account, Cognito or charger calls occur. See `tests/runtime/README.md` for the separate framework reproduction setup.
 - The real-framework cases cover default-off loading/polling, options confirmation/reload, fresh command guards, one PUT per attempt, HTTP/timeout error disablement, opt-out races, token updates preserving the client, separate End binding, diagnostic loader discovery/redaction/error handling and bounds. Reported status is not optimistically changed after a command.
 - Packaging, documentation-link, source-hash and excluded-file checks are recorded in [release validation](release-validation.md). Automated checks cannot prove actual device actuation, model compatibility or provider stability.
 
@@ -42,3 +42,7 @@ Do not add Pause or unattended automations to this beta on the basis of reported
 ## Separate upstream contribution
 
 The Pyhive draft passed 1,124 tests with 100% coverage. The Core draft passed 30 real Hive tests, one separate actual-local-library contract test, scoped typing and 24 targeted integration checks. Those are separate records, not validation of this custom component. The upstream feature is still dormant with Core's released dependency pin until a compatible library release and reviewed dependency update exist; full bootstrap/repository checks remain outstanding. See [the contribution plan](upstream-contribution-plan.md).
+
+## Native helper beta validation
+
+The final 0.2.0b2 framework run passed 21 cases (the prior 16 plus five energy-helper cases) in 20.99 seconds. Actual entity-registry default disablement, enabling, energy/kWh/total-increasing metadata, accumulation independent of session resets, save/load through HA restore storage across a 600-second gap, invalid/failure/long-gap handling and duplicate prevention passed. Native branding separately passed one HTTP case in 1.36 seconds. These use synthetic telemetry, not real charger commands. Rendered Energy dashboard selection and Recorder statistics end-to-end have not been exercised; owner installation and comparison during a normal charge remain next steps.
