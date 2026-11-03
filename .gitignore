@@ -26,7 +26,7 @@ diagnostics/
 captures/
 local-data/
 
-# Original/proprietary inspection material and experimental controls excluded
+# Original/proprietary inspection material and private investigation artifacts excluded
 *.apk
 *.aab
 *.dex

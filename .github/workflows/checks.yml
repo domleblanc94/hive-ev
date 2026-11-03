@@ -1,0 +1,36 @@
+name: Offline checks and package
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+      - name: Install offline-test dependencies
+        run: python -m pip install -r requirements-test.txt
+      - name: Run offline tests
+        run: python -m unittest discover -s tests -v
+      - name: Build installation package
+        run: python tools/build_integration_package.py
+      - name: Check package scope and integrity
+        run: python tools/check_package.py
+      - name: Retain review artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: hive-ev-installation-review
+          path: dist/hive-ev-*.zip
+          if-no-files-found: error
+          retention-days: 7

@@ -6,7 +6,7 @@ from typing import Any
 
 import probatio
 
-from homeassistant.config_entries import SOURCE_REAUTH, ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import SOURCE_REAUTH, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -19,6 +19,10 @@ class HiveEVConfigFlow(ConfigFlow, domain=DOMAIN):
     """Do not retain the password or initiate MFA during background polling."""
 
     VERSION = 1
+
+    @staticmethod
+    def async_get_options_flow(config_entry):
+        return HiveEVOptionsFlow()
 
     def __init__(self) -> None:
         self._login: HiveEVLogin | None = None
@@ -127,3 +131,22 @@ class HiveEVConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
         """Always ask for a new interactive login; no stored account password."""
         return await self.async_step_user()
+
+
+class HiveEVOptionsFlow(OptionsFlow):
+    """Explicit enrollment for a single owner-confirmed Alfen charger."""
+
+    async def async_step_init(self, user_input=None):
+        errors = {}
+        if user_input is not None:
+            from .controls import controls_enabled
+            if user_input.get("enable_experimental_controls") and not controls_enabled(user_input):
+                errors["base"] = "alfen_confirmation_required"
+            elif user_input.get("enable_experimental_controls") and len(getattr(getattr(self.config_entry, "runtime_data", None), "data", None) or {}) != 1:
+                errors["base"] = "single_charger_required"
+            else:
+                return self.async_create_entry(title="", data=user_input)
+        return self.async_show_form(step_id="init", data_schema=probatio.Schema({
+            probatio.Required("enable_experimental_controls", default=False): bool,
+            probatio.Required("owner_confirmed_alfen", default=False): bool,
+        }), errors=errors)

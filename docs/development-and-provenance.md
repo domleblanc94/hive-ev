@@ -24,6 +24,12 @@ If this work is proposed upstream, the pull request should disclose the same AI 
 
 Static analysis used public app code, not the user's private application database, saved login files or account traffic captures. A legacy inventory omission also does not establish that Hive lacks a charger API.
 
+## Beta control promotion, 3 November 2026
+
+The owner installed private precursor dev1 and supervised Charge Now (reported 5,825 W), End (Finishing/0 W/inactive), and reconnection to Scheduled. The owner also supplied a dev2 diagnostic. At the owner's request, the tested monitoring, optional controls and diagnostic modules were promoted into public beta candidate 0.2.0b1. Pause work was deferred; no Pause action or detailed speculative feature research was promoted. The beta control scope stays deliberately narrow and disabled on a new installation. Existing private options survive upgrades.
+
+The public source passed 45 offline checks and 16 tests inside the real Home Assistant framework with synthetic transport. Neither those checks nor the predecessor's owner observations establish broad compatibility or unattended control. The exact public artifact is a release candidate, not a reported live installation. See [release validation](release-validation.md).
+
 ## Material for a public repository
 
 The intended distribution is the custom integration source, synthetic tests and project documentation. **Do not include the original APK, split APKs, copyrighted app assets, extracted Hermes bundle or decompiled application files.** The static evidence supports implementation decisions; it is not a proposed redistribution of Hive's application.
@@ -34,4 +40,4 @@ The embedded application client key is shared application configuration, not a u
 
 ## Draft status
 
-This standalone source repository was assembled locally at the user's request. It is not a published hosted repository, a submitted upstream pull request or confirmed public support. The testing record distinguishes earlier command/state results from the later overnight charging evidence, including Hive-reported session energy. Specific token renewal events, detailed restart/registry checks and reliable readiness after Stop remain unverified; basic restart recovery is now user-reported. Update it as evidence changes; do not silently turn pending checks into verified claims.
+This standalone beta source repository was assembled locally at the user's request. It is not a published hosted repository, a submitted upstream pull request or confirmed public support. The testing record distinguishes earlier command/state results from the later overnight charging evidence, including Hive-reported session energy. Specific token renewal events, detailed restart/registry checks and reliable readiness after Stop remain unverified; basic restart recovery is now user-reported. Update it as evidence changes; do not silently turn pending checks into verified claims.

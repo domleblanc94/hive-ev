@@ -4,6 +4,8 @@ Research checked **30 October 2026**; live validation updated **31 October 2026*
 
 The standalone custom integration and an upstream Hive contribution are different deliverables. The former contains protocol and authentication code that cannot simply be copied into Core. Local library, Core, and documentation drafts have now been prepared; nothing has been submitted upstream.
 
+The standalone custom component now has optional experimental controls in beta 0.2.0b1. That does not widen this upstream contribution: the Pyhive/Core drafts remain **monitoring-only**.
+
 ## Local implementation status
 
 - The Pyhive branch adds optional asynchronous `hive.ev.get_devices()` and a reported-value charger model. The full library suite passed 1,124 tests with 100% coverage, and the package build passed. Source mypy and the tracked-file Linux-platform type check passed; native Windows all-file mypy encounters existing Unix-only script APIs.

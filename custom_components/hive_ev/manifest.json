@@ -1,10 +1,12 @@
 {
   "domain": "hive_ev",
   "name": "Hive EV",
-  "version": "0.1.0",
+  "version": "0.2.0b1",
   "config_flow": true,
   "documentation": "https://www.home-assistant.io/integrations/hive/",
   "iot_class": "cloud_polling",
   "integration_type": "hub",
-  "requirements": ["pyhive-integration==1.0.10"]
+  "requirements": [
+    "pyhive-integration==1.0.10"
+  ]
 }

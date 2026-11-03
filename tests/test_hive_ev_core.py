@@ -218,7 +218,7 @@ def load_ha_modules():
     class UpdateFailed(Exception):
         pass
     module("homeassistant")
-    module("homeassistant.config_entries", ConfigFlow=Flow, ConfigFlowResult=dict,
+    module("homeassistant.config_entries", ConfigFlow=Flow, OptionsFlow=Flow, ConfigFlowResult=dict,
            ConfigEntry=object, SOURCE_REAUTH="reauth")
     module("homeassistant.const", CONF_USERNAME="username", CONF_PASSWORD="password")
     module("homeassistant.core", HomeAssistant=object)

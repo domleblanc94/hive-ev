@@ -1,43 +1,50 @@
 # Develop and verify locally
 
-This is a monitoring-only custom integration. Keep charging commands and experimental trial tools out of the package. Authentication calls are required for sign-in and renewal; charger data access is read-only.
+This beta provides reported monitoring and explicitly enabled experimental manual controls. Keep supported behaviour, synthetic tests and owner observations distinct. The implementation/tests/docs were generated with OpenAI Codex; contributors must review and understand submitted changes themselves.
 
-## Setup and tests
+## Offline checks
 
-Use Python 3.13 or newer for these offline tests. Home Assistant 2026.10.4 itself requires its own supported Python/runtime environment; the stub suite does not replace a real installation test.
+Use Python 3.14 for the recorded environment and create a virtual environment:
 
 ```text
 python -m venv .venv
-```
-
-Activate the environment using `.venv\Scripts\Activate.ps1` on Windows PowerShell, or `source .venv/bin/activate` on macOS/Linux. Then run from the repository root:
-
-```text
 python -m pip install -r requirements-test.txt
 python -m unittest discover -s tests -v
 python tools/build_integration_package.py
+python tools/check_package.py
 ```
 
-The ZIP is written to `dist/` with `custom_components/hive_ev/` at the correct installation path. It contains only explicitly allowed integration files, the install README and licence notices. Test fixtures use invented identifiers and tokens. Tests must not sign in or contact the account API.
+Activate `.venv` before running the remaining commands (`.venv\Scripts\Activate.ps1` on Windows, `source .venv/bin/activate` on Linux/macOS). These 45 checks use Home Assistant stubs and invented data. They must not sign in, request SMS or contact a real account/charger.
+
+The separate actual Home Assistant pytest harness lives in `tests/runtime/`, outside offline discovery. Its README explains copying the test into a suitable Core framework checkout and using HIVE_EV_SOURCE_DIR. It requires the real Home Assistant test environment and the component's declared released Pyhive 1.0.10 dependency. Do not install the unpublished upstream-library draft as a substitute.
+
+The packaging script whitelists component files, public docs and licence notices into `dist/hive-ev-<version>.zip`. Private research, downloaded diagnostic files, account responses, runtime environments, APKs/decompiled code and experimental source backups must remain excluded. Runtime reproduction files belong in a source archive, not the install ZIP.
 
 ## Source map
 
-| File | Responsibility |
+| Area | Responsibility |
 |---|---|
-| `custom_components/hive_ev/config_flow.py` | Owner sign-in, SMS, explicit trusted-device consent and reauthentication |
-| `custom_components/hive_ev/auth.py` | Pinned Pyhive SRP/MFA adaptation and Cognito token renewal |
-| `custom_components/hive_ev/api.py` | Authenticated cloud reads and reported-value parsing |
-| `custom_components/hive_ev/coordinator.py` | Shared polling and unavailable/auth-failure handling |
-| `custom_components/hive_ev/sensor.py` | Status, refresh timestamp and optional measurement entities |
-| `custom_components/hive_ev/binary_sensor.py` | Reported charging-session activity |
-| `tests/` | Offline synthetic protocol, flow, coordinator and entity checks |
+| config_flow.py / auth.py | Owner sign-in, SMS, trusted-device consent, options and normal renewal |
+| api.py / coordinator.py | Authenticated monitoring, reported parsing and unavailable/reauth state |
+| sensor.py / binary_sensor.py | Stable monitoring entities and late optional telemetry |
+| controls.py / button.py | Fresh guarded manual writes, attempt limits, uncertain-delivery opt-out |
+| diagnostics.py / diagnostic_shapes.py | Explicit bounded technical diagnostics and redaction |
+| tests/ | Synthetic offline suite; tests/runtime/ is the separate real-framework harness |
 
-Do not log account credentials, raw HTTP bodies, home/device identifiers or user-specific URLs. An exception string from a dependency can contain private data. Keep user-facing errors bounded and sanitized.
+## Behaviour and privacy
 
-Maintain the distinction between reported and requested values. Missing power must not become zero, a transaction flag must not be described as measured power, and session energy must not become a lifetime consumption total.
+Never log account credentials, raw HTTP bodies, IDs/names or user-specific URLs. Dependency exception strings may contain private data. Maintain fixed safe errors and invented fixtures. An embedded shared app-client identifier is not a user's credential or an official API permission grant.
 
-## Reviews and upstream contributions
+Reported values remain authoritative. Missing power is not zero, active session is not measured power, session energy is not lifetime consumption, and acknowledgement is not completed physical action. Optional sensors must appear when data becomes available without resetting existing identities.
 
-Disclose AI assistance. OpenAI Codex generated this implementation and tests; agent review is not a claim that a human has read and understood every line. Anyone submitting a contribution must personally review it, validate it and satisfy the target project's current policies. Leave any human-review or hardware-validation declarations unconfirmed until actually completed.
+Do not remove enrollment/fresh-state gates, retry writes automatically, label End as Pause, or silently widen support to other modes/devices. Options changes/unload must invalidate queued old controllers; token-save updates must not reload them. Diagnostics must never invoke controls or retrieve installer credentials. Add meaningful tests when those boundaries change.
 
-Home Assistant Core contributions require a separate review of library boundaries, tests and contribution requirements; copying this custom integration into Core is not a ready submission. See [provenance](docs/development-and-provenance.md) and [testing](docs/testing.md).
+## Releases and upstream
+
+Follow PUBLISHING.md and [release validation](docs/release-validation.md). Publishing is a reviewed owner action; no workflow should silently release on a push. Preserve required notices and Codex provenance.
+
+The separate built-in Hive contribution uses a public Python client boundary and remains monitoring-only. Do not copy this standalone component wholesale into Core. Follow the destination project's instructions and complete human-review declarations truthfully.
+
+## Hosted checks
+
+The prepared GitHub Actions workflow runs the offline suite, builds the whitelisted install ZIP, verifies its file scope/source/privacy markers and retains a review artifact. It uses read-only repository permissions and does not publish releases or contact a Hive account. Action revisions are pinned to commits verified against their official release tags. The real-framework suite remains a separate supported-environment check. No hosted run is claimed before this repository is published and GitHub executes it.

@@ -1,59 +1,66 @@
 # Hive EV for Home Assistant
 
-A monitoring-only custom integration for Hive-connected EV chargers, initially tested with an Alfen NG910. It uses the Hive cloud and keeps your existing Hive integration and charger setup in place. It contains no charger controls or schedule changes. It is unofficial and is not endorsed by Hive, Alfen or Home Assistant.
+**0.2.0b1 — beta release candidate.** Monitor a Hive-connected EV charger and optionally enable two experimental manual controls: **Charge now** and **End charging session**. Controls are off on a new installation. Pause/resume and schedule editing are not included.
 
-The human user installed this integration in Home Assistant. During the 30–31 October 2026 overnight run, monitoring continued through a scheduled charge; Hive reported **7.11 kWh** and **61 minutes 30 seconds** of session charging. The power, session energy and duration sensors are now visible; the supplied History exports now confirm active power of **6,973–7,108 W**, session energy rising to **7,110 Wh**, and power returning to **0 W** at completion. See [overnight results](docs/overnight-results.md) and [next steps](docs/next-steps.md). The owner also reports restarting Home Assistant and seeing updates resume without another sign-in. Registry/duplicate-entity checks, specific renewal events and longer-term reliability remain to be checked. This uses an undocumented app API, so Hive service changes may affect it.
+Tested by one owner with a Hive-connected **Alfen NG910, firmware 5.8.1-4123**, using Home Assistant OS. The charger remains connected to Hive over its existing mobile connection; no local charger connection or backend change is required. Other charger models, Power+/DSR control and multiple-charger control are not validated. This is unofficial and is not endorsed by Hive, Alfen or Home Assistant.
 
-**Developed with OpenAI Codex:** the implementation, tests and documentation were AI-generated with multi-agent investigation and review; the human user ran local discovery and hardware trials. See [development and provenance](docs/development-and-provenance.md) for the process, attribution and limits.
+**End session can unlock the cable, leave Finishing, and require unplugging/reconnection before scheduled charging is ready again. It is not Pause.** Saved schedules are not edited, but readiness after ending a session must be checked in Hive. Keep the existing Hive integration for heating and other devices.
 
-## How the API was identified
+## Features
 
-USB debugging was used only to copy the installed official Android APK through ADB. Codex inspected its React Native/Hermes version 96 bundle using strings and `hermes-dec`, then traced Cognito sign-in/MFA, account homes, version 6.6 node metadata and version 6.5 reported features. The human user ran normal authentication locally and shared sanitized results confirming the charger data. No private app data or intercepted passwords were used, and MFA was not bypassed. This is an undocumented app interface, not an official developer API.
+- Reported charging status and session-active flag. An active session can be Scheduled or Paused at 0 W.
+- Charging power (W), session energy (Wh), and session charging duration (seconds), added when Hive first supplies them. Missing values stay unknown.
+- Last successful refresh, recording cloud receipt time. Polling is every 60 seconds; this is not a direct charger freshness measurement.
+- Optional **Charge now (experimental)** and **End charging session (experimental)** buttons, with explicit owner/Alfen enrollment and fresh-state checks.
+- An explicit diagnostic download containing bounded technical shapes and redacted metadata, using the existing authenticated session.
 
-Separate control research traced the app's confirmation popup and session handlers. The first control-host trace was wrong and the request was rejected; independent review corrected the resolver. Local tests had not proved that the provider endpoint was correct. Later app and trial observations both showed Charging → Finishing after Stop, which establishes an end-session pattern rather than reliable pause/resume. Controls are excluded here. APKs, decompiled code and app assets are not distributed. See [the full provenance record](docs/development-and-provenance.md).
+Session energy/duration reset between sessions. Session energy is not a lifetime energy total or an Energy dashboard consumption source.
 
-## What appears in Home Assistant
+## Install or upgrade
 
-- **Charging status:** Hive's reported display state, such as Available or Charging. Available does not establish whether a cable is plugged in.
-- **Charging session active:** Hive's reported transaction flag. An active session does not always mean the car is drawing power.
-- **Last successful refresh:** when Home Assistant last received a successful cloud update, rather than when the charger itself last reported.
-- **Charging power**, **Session energy** and **Session charging duration:** added when Hive first supplies these readings. The idle discovery did not include these measurements; all three sensors were visible after the overnight charge. Missing readings stay unknown; they are not replaced with zero.
+1. Back up Home Assistant and the existing `custom_components/hive_ev` folder. If upgrading from a private experimental build, disable experimental commands in Configure first; existing options are retained during an upgrade.
+2. Extract the release ZIP, or copy this repository's `custom_components/hive_ev` folder, into your Home Assistant configuration directory. The resulting path must be `/config/custom_components/hive_ev/manifest.json`; avoid an extra nested folder. File editor, Studio Code Server or Samba can provide access.
+3. Restart Home Assistant. For upgrades, reuse the existing Hive EV entry and verify that monitoring resumes. Do not remove/re-add it just to upgrade.
+4. On a new installation, open **Settings → Devices & services → Add integration → Hive EV**. Sign in with the Hive account owner and complete normal SMS verification. If Hive requires a trusted sign-in device, setup offers an initially unchecked registration checkbox to support unattended renewal.
+5. Check status and power against Hive before enabling controls. Existing private experimental options may already be enabled after an upgrade; inspect Configure explicitly.
 
-Session energy and duration can reset with a new session. They are not lifetime energy totals and are not intended as an Energy dashboard consumption source. Connection or authentication failures make entities unavailable instead of presenting old readings as current.
+This release candidate is prepared locally. No hosted repository, release URL or HACS availability is claimed until a real destination is configured. See [publication steps](PUBLISHING.md).
 
-## Install
+## Optional experimental controls
 
-1. Make a Home Assistant backup.
-2. Download or copy this repository and locate `custom_components/hive_ev`. Alternatively, extract a monitoring ZIP built from this source.
-3. Using your usual File editor, Studio Code Server or Samba access to Home Assistant, copy that folder into your Home Assistant configuration folder. The result must be `/config/custom_components/hive_ev/manifest.json`. Avoid an extra nested `hive_ev` folder.
-4. Restart Home Assistant.
-5. Open **Settings → Devices & services → Add integration**, search for **Hive EV**, and follow the sign-in prompts. Use your Hive account-owner login with two-factor authentication enabled, and enter the SMS code when requested. If Hive requires a new trusted sign-in device, a separate step offers an initially unchecked **Register Home Assistant Hive EV as a trusted sign-in device** checkbox. Selecting it registers Home Assistant's sign-in with Hive to support unattended token renewal. It does not associate or reconfigure your charger.
-6. Open the new Hive EV integration's device to see its monitoring entities. Keep the existing **Hive** integration installed for heating and other devices.
+Open **Settings → Devices & services → Hive EV → Configure** and confirm both experimental enrollment and ownership of the single Alfen charger. Enabling options alone does not send a command.
 
-There is no GitHub or HACS repository configured for this package. Installing it does not require changing the charger's OCPP destination, local network settings or Hive schedules.
+| Button | Current beta guard | Meaning |
+|---|---|---|
+| Charge now | Active Custom/Tariff scheduled session, settled eligible state, no override, reported 0 W | Requests a Charge Now override; electricity may be bought at the current rate |
+| End charging session | Active Charge Now override reporting Charging and positive power | Ends/unlocks the session; Finishing and reconnection may follow |
 
-## Account and privacy
+This beta deliberately restricts End session to a charging override; it is not a general stop button for every scheduled/idle state. Missing, conflicting or pending readings, unsupported modes and multiple monitored chargers are refused. A nearly full car drawing no power cannot complete the end-session trial through these buttons.
 
-Enter credentials only in Home Assistant's sign-in form; do not share them in chat. The integration stores ID and refresh tokens, expiry, user ID and, when needed, a trusted-device key in Home Assistant's normal `.storage` configuration so it can reconnect. Treat Home Assistant backups as private because they may include tokens. It retains neither your account password nor a device password.
+Use the buttons only for supervised manual trials. There is one attempt per action per integration runtime and a 60-second cooldown. No write is automatically repeated. Uncertain delivery disables controls persistently: inspect Hive and the car before explicitly enabling again. Restarting/reloading resets runtime attempt limits; it does not cancel a request already delivered. Do not use reloads or automations to bypass those limits.
 
-If Hive expires or rejects the login, Home Assistant should request reauthentication. Open the integration or the related repair prompt and sign in again. An SMS may be required. Removing the integration deletes its local configuration entry; it does not remove the charger from Hive or automatically revoke a trusted sign-in device registered with your Hive account.
+After End session, confirm power has stopped, follow Hive's unplug/reconnect instructions if shown, and verify saved times, override clearance and scheduled readiness before leaving. Earlier automatic recovery without unplugging was also observed, so reconnection is not claimed to be universally necessary. See [the control guide](docs/controls.md) for the complete trial and rollback procedure.
 
-## First trial
+## Evidence and limitations
 
-After installing, compare the displayed status and session activity with the Hive app. Check again during your next normal charging session, then confirm updates continue after a Home Assistant restart. Leave the integration running long enough to check token renewal. Continue using the Hive app for charging controls.
+The owner supplied an overnight log showing Scheduled → Charging → Completed with 680 successful refreshes across approximately 11 hours 25 minutes. History exports show **6,973–7,108 W** active power and energy rising to **7.11 kWh**; a sensor screenshot reports **3,690 seconds**. Restart recovery without another sign-in is user-reported. See [overnight results](docs/overnight-results.md).
 
-If it fails to load, use **Settings → System → Logs** to find the integration's error. Do not share full configuration files, tokens or raw cloud replies. Review any diagnostic material before sharing it; this package does not provide a dedicated diagnostics exporter. This integration polls the cloud every 60 seconds, so updates are not instantaneous.
+On 3 November 2026 the owner used the private precursor's Charge Now button and observed **5,825 W**. End session produced Finishing, 0 W and session inactive; reconnection returned to Scheduled. The subsequent diagnostic download also worked. These are one-account observations of the predecessor builds, separate from release-candidate automated tests; they are not independent meter verification or a broad compatibility claim.
 
-## Development verification
+See [testing](docs/testing.md) and [release validation](docs/release-validation.md) for automated results and remaining checks. Sustained renewal/expiry recovery, detailed registry checks, further hardware variants and repeated control cycles need more evidence. Hive can change this undocumented interface.
 
-API, authentication, configuration-flow, coordinator and entity checks cover data handling and setup behaviour. Home Assistant interfaces are stubbed in local tests. The implementation was reviewed against Home Assistant 2026.10.4 APIs; the human's successful installation and overnight monitoring are separate evidence from these tests. Full lifecycle validation and sustained token renewal remain part of the trial.
+## Authentication, diagnostics and support
 
-For setup, source structure, local tests and ZIP packaging, see [CONTRIBUTING.md](CONTRIBUTING.md). [Architecture](docs/architecture.md) explains authentication and reported data; [testing](docs/testing.md) records what has and has not been verified. Controls investigated in separate supervised trials are not distributed in this monitoring repository. Stopping a charging session is not established as a pause/resume action, and automatic recovery to readiness remains condition-dependent and unresolved.
+Credentials are entered only in Home Assistant. Its config-entry storage retains tokens, expiry, account identity and an optional trusted-device key; account and device passwords are not retained. Protect backups because they can contain tokens. Normal reauthentication may require another SMS. Removing this integration does not automatically revoke a Hive trusted sign-in record.
 
-## Scope
+Use the integration entry's three-dot menu → **Download diagnostics** for technical troubleshooting. The component excludes credentials, account/device identifiers, arbitrary values and raw readings from its data. Home Assistant may add standard system/integration metadata and an entry-derived filename outside that sanitizer. Review the file before sharing. Diagnostic downloads do not activate controls or send charging commands. See [diagnostics](docs/diagnostics.md).
 
-This project provides EV monitoring only. Solar, battery and other additional device support, historical-data retrieval and charger controls are not implemented.
+For a bug report, provide the integration version, Home Assistant version, charger model, observed states, expected result and a reviewed error/diagnostic summary. Do not share `.storage`, credentials, raw API replies or personal screenshots. For uncertain command outcomes, resolve the charging state in Hive first.
 
-To review publication requirements, including the unresolved legal/permission questions, see [PUBLISHING.md](PUBLISHING.md). No legal clearance or Hive permission is claimed. The [upstream contribution plan](docs/upstream-contribution-plan.md) covers the separate Hive library and Home Assistant Core work.
+## Development and attribution
 
-Entity behaviour follows the official Home Assistant documentation for [coordinator updates](https://developers.home-assistant.io/docs/integration_fetching_data/), [sensors](https://developers.home-assistant.io/docs/core/entity/sensor/) and [binary sensors](https://developers.home-assistant.io/docs/core/entity/binary-sensor/).
+**OpenAI Codex generated the implementation, tests and documentation using user-directed agents.** The owner supplied requirements, performed normal local authentication, installed the component and supervised the hardware trials. AI review is not human review or maintainer acceptance.
+
+The API was identified by copying the installed official Android APK with ADB/USB debugging, inspecting its Hermes bundle locally, and tracing normal authentication and request paths. Initial control-host tracing was wrong and corrected after a rejected request. No MFA bypass or private app database was used. APKs, decompiled code, raw account data and detailed untested device/history research are excluded.
+
+See [development and provenance](docs/development-and-provenance.md), [architecture](docs/architecture.md), [CONTRIBUTING.md](CONTRIBUTING.md) and [next steps](docs/next-steps.md). The separate [Home Assistant Core contribution](docs/upstream-contribution-plan.md) remains monitoring-only and needs a compatible published client-library release; this custom component is not that upstream patch.

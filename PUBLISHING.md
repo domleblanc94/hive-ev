@@ -4,11 +4,17 @@ This repository is prepared locally. It has not been published to GitHub and no
 remote destination has been chosen. Do not add the larger investigation workspace
 or any extracted Hive application files to it.
 
+The working folder also contains Git-ignored private material. Publish tracked
+Git content, or use the generated clean source archive for a web upload. Do not
+drag the whole working folder into GitHub: a web upload does not inherit the
+local Git ignore protection.
+
 ## Review before publishing
 
 Read the code, [development record](docs/development-and-provenance.md) and
-[validation limits](docs/testing.md). The release is monitoring-only. The separate
-control experiments do not establish reliable pause/resume or overnight readiness.
+[validation limits](docs/testing.md). The candidate is **0.2.0b1**, with monitoring and optional default-off experimental
+manual controls. End session may require reconnection; Pause/resume, unattended
+control and automatic overnight readiness are not established.
 The implementation and tests were generated with OpenAI Codex; AI-agent review is
 not a substitute for your own understanding or a human security audit.
 
@@ -56,10 +62,25 @@ documentation link points to the real built-in Hive documentation; that page doe
 not document this unofficial EV extension. Do not invent maintainer identities,
 repository URLs, endorsement or HACS availability.
 
-Build the clean installation ZIP with `python tools/build_integration_package.py`
+Build the clean installation ZIP (`hive-ev-0.2.0b1.zip`) with `python tools/build_integration_package.py`
 if you want to attach it to a GitHub release. The generated `dist/` directory is
 ignored by Git. Do not upload APKs, decompiled code, raw diagnostic responses or
 personal screenshots as release attachments.
+
+## Publish this beta
+
+After review, publish the actual reviewed commit and create a GitHub release for
+version 0.2.0b1 with **Set as a pre-release** enabled. Use CHANGELOG.md and the
+release notes supplied with the review artifacts. Attach the clean installation
+ZIP and SHA-256 checksums; attach the source archive separately if useful. This
+repository does not automatically publish releases. A hosted CI run, when executed,
+is separate from the local checks and must not be claimed before it runs.
+
+Check the install archive contains controls/diagnostics modules and public
+documents, but no tests, private research, diagnostics files, app material or
+account data. Warn upgraders to disable experimental controls first because
+existing entry options are retained. Mark the narrow End-session and one-trial
+limits prominently. Do not describe the beta as universal charger support.
 
 ## Home Assistant Core is a separate contribution
 

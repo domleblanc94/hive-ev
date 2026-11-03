@@ -5,17 +5,24 @@
       "user": {
         "title": "Connect Hive EV",
         "description": "Sign in with your Hive account-owner login. This integration monitors your charger through Hive and keeps Hive scheduling in place. Your account password is used only during setup and is not saved.",
-        "data": {"username": "Hive email", "password": "Hive password"}
+        "data": {
+          "username": "Hive email",
+          "password": "Hive password"
+        }
       },
       "sms": {
         "title": "Verify Hive sign-in",
         "description": "Enter the SMS verification code sent by Hive. If the code expires, cancel setup and sign in again.",
-        "data": {"code": "SMS code"}
+        "data": {
+          "code": "SMS code"
+        }
       },
       "remember": {
         "title": "Remember Home Assistant in Hive",
         "description": "Hive requires Home Assistant to be remembered as a trusted sign-in device for automatic token renewal. Confirm to register 'Home Assistant Hive EV' on your Hive account. This changes sign-in authorization only; charger settings and schedules are not changed. Sign-in tokens and a device key are saved in Home Assistant's configuration. You can cancel to leave setup unfinished.",
-        "data": {"remember_device": "Register Home Assistant Hive EV as a trusted sign-in device"}
+        "data": {
+          "remember_device": "Register Home Assistant Hive EV as a trusted sign-in device"
+        }
       }
     },
     "error": {
@@ -30,6 +37,22 @@
       "no_chargers": "No supported Hive EV charger was found on this account.",
       "wrong_account": "Sign in with the same Hive account used for this integration.",
       "reauth_successful": "Hive EV sign-in was renewed."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Experimental Alfen controls",
+        "description": "Enable only for your single Alfen charger and a supervised manual trial. Charge now may use daytime electricity. End charging session sends cable unlock/end, can leave Finishing and may require unplugging and reconnecting; it is NOT pause/resume. Recovery after ending a session can vary. Saved schedules are not edited, but overnight readiness is NOT guaranteed. After an uncertain request controls turn off: check/cancel any pending Charge now in Hive before explicitly enabling again. Re-enabling does not cancel an earlier request. Do not use these buttons in automations.",
+        "data": {
+          "enable_experimental_controls": "Enable experimental commands (default off)",
+          "owner_confirmed_alfen": "I am the account owner and confirm this single charger is Alfen"
+        }
+      }
+    },
+    "error": {
+      "alfen_confirmation_required": "Confirm ownership and the Alfen charger to enable commands.",
+      "single_charger_required": "Exactly one monitored charger is required for these beta controls."
     }
   }
 }

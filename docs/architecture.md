@@ -1,48 +1,44 @@
 # Architecture
 
-This draft documents the monitoring-only `hive_ev` custom integration. It is separate from Home Assistant's built-in Hive integration. The development account's Alfen NG910 was discovered through Hive's modern cloud API while remaining connected to the Hive app. Broader charger compatibility has not been established.
+The standalone `hive_ev` custom integration provides reported monitoring, optional experimental manual controls and explicit diagnostics. It is separate from the built-in Hive integration and its monitoring-only upstream contribution.
 
-## Data flow
+## Authentication and monitoring
+
+Normal owner sign-in and SMS verification produce tokens stored in Home Assistant's config entry. When trusted-device registration is required, a separate initially unchecked consent step supports unattended renewal. Account and device passwords are not retained. Removing the entry does not automatically revoke a Hive trusted sign-in record.
+
+`api.py` reads account homes and their nodes from the Hive proxy, using the 6.5 representation and TLS. The shared coordinator polls every 60 seconds. Authentication failures request reauthentication; failed reads make entities unavailable. Token changes are saved without reloading the control runtime.
+
+The EVSE fields provide reported status, transaction activity, power, session Wh and charging seconds. Target values never substitute for observed telemetry. Missing measurements remain unknown, optional sensors are added when first reported, and removed nodes become unavailable. Session energy/duration can reset; they are not lifetime totals. Last successful refresh is the receipt time, not proof of a fresh physical sample.
 
 ```mermaid
 flowchart LR
-    Setup[Home Assistant setup and SMS verification] --> Cognito[Hive Cognito authentication]
-    Cognito --> Tokens[Home Assistant config entry tokens]
-    Tokens --> Poll[Shared coordinator: 60 seconds]
-    Poll --> Homes[Hive proxy: account homes]
-    Homes --> Nodes[Hive proxy: version 6.5 nodes]
-    Nodes --> Parser[Reported-value parser]
-    Parser --> Entities[Status and session sensors]
+    Login[Owner sign-in and MFA] --> Client[Shared authenticated client]
+    Client --> Poll[60-second reported-data polling]
+    Poll --> Sensors[Status and session sensors]
+    OptIn[Explicit Alfen control enrollment] --> Button[Manual button press]
+    Button --> Guard[Fresh reads and serialized guards]
+    Client --> Guard
+    Guard --> Write[One bounded command request]
+    Download[Explicit diagnostic download] --> Shapes[Bounded technical shapes]
+    Client --> Shapes
 ```
 
-`config_flow.py` handles account-owner sign-in, SMS verification and reauthentication. `auth.py` performs authentication and renewal. Where Hive requires new-device registration for renewal, setup presents a separate, initially unchecked consent step to register **Home Assistant Hive EV** as a trusted sign-in device. This is account authorisation, not charger association.
+## Optional manual controls
 
-The integration retains the ID token, refresh token, expiry, user ID and optional trusted-device key in Home Assistant's normal config-entry storage. It does not retain the account password or a device password. Removing the integration does not automatically revoke the corresponding trusted sign-in record in Hive.
+`config_flow.py` offers explicit owner/single-Alfen enrollment. Buttons load only when both options are true; new installations default to off. Upgrades retain existing options. Disabling/unloading invalidates old controllers and unloads active handlers. Historical registry entries may remain unavailable. Tests cover options changing while a preflight is suspended and re-enabled, so the old runtime cannot resume a command.
 
-`api.py` reads the authenticated account's homes, then requests each home's nodes from Hive's proxy using the `application/vnd.alertme.zoo-6.5.0+json` representation. The version matters: the app's version 6.6 discovery supplies broker metadata rather than the reported features needed by this parser. Authentication uses Hive Cognito; proxy reads also use the application's embedded client key. That shared client key is not the user's credential, and is not a substitute for the user's authenticated account access. Its inclusion is not evidence of a supported public API or permission from Hive.
+`controls.py` serializes by device, re-reads discovery and selected EVSE state, and refuses unsupported modes, multiple chargers, missing/contradictory targets and pending unlocks. Charge Now requires a settled active scheduled session at 0 W without an override. End requires an active override reporting Charging and positive power. The latter is a deliberately narrow supervised-trial scope.
 
-`coordinator.py` shares one polling cycle among entities and translates authentication failures into reauthentication requests. Connection or representation failures make entities unavailable. `sensor.py` and `binary_sensor.py` create entities with stable internal node-based identities; removed nodes become unavailable.
+The app-equivalent request writes only one EVSE attribute: true `transactionOverridden` for Charge Now or true `cableUnlock` for End. The verified write transport is `https://api-prod.bgchprod.info/omnia/nodes/{id}?homeId=...`, using the existing Bearer token and 6.5 representation, without the proxy's shared app key. No schedule fields, linking, OCPP destination or installer settings are written.
 
-## What a reading means
+Each action consumes an attempt before transport, at most once per runtime, with a cooldown. PUT is bounded, TLS-verified, not redirected and never automatically retried after an authorization/transport/service failure. Uncertain delivery blocks the controller and disables enrollment persistently. Reload/restart resets runtime attempt limits, but cannot cancel an earlier delivered request. No optimistic physical state is applied; reported reads remain authoritative. Acknowledgment alone is not charging confirmation.
 
-The verified EVSE node uses `features.ev_supply_equipment_v1`. The status comes from `displayState.reportedValue`; session activity comes from `transactionActive.reportedValue`. Requested `targetValue` data is deliberately not used as observed telemetry.
+End is a session-ending/unlock action, not Pause. The owner saw Finishing/0 W/inactive and recovered after reconnecting. Earlier automatic readiness recovery was also observed. Neither universal reconnection nor universal same-plug readiness is claimed. See [controls](controls.md).
 
-The development account returned `AVAILABLE` and `transactionActive: false` in an initial live read. The user subsequently reported Scheduled in the Hive app. **Available does not establish cable disconnection. An active transaction does not establish power delivery.** A paused or scheduled session may draw no power. Physical charging needs corroborating power telemetry or observation in the Hive/car interface.
+## Explicit diagnostics
 
-When present, `transactionActivePowerImportW`, `transactionEnergyTotalWh` and `transactionChargeTimeSeconds` provide power, session energy and charging duration. Missing or invalid numbers remain unknown, not zero. These measurements were absent from the initial idle response. Optional entities are added when first observed. Session energy and duration can reset, so they are not exposed as cumulative lifetime statistics.
+`diagnostics.py` uses existing authenticated node reads only on Download diagnostics. `diagnostic_shapes.py` bounds device/home scans, EV node selection, technical field counts, sampled collection sizes and serialized output. Known keys and strict technical metadata are retained; unknown keys are hashed and raw readings/identifiers/credentials excluded. No settings endpoint or command is invoked. The standard Home Assistant envelope/filename is outside the component sanitizer. See [diagnostics](diagnostics.md).
 
-The last-successful-refresh sensor records receipt of a successful cloud poll, not the charger's original reporting time. Successful receipt alone does not prove a fresh physical measurement.
+## Limits
 
-## Controls and schedules
-
-The monitoring integration has no charging buttons, switches, services or schedule writes. Continue using Hive for control.
-
-A separate supervised trial tool investigates app-equivalent session commands. Static inspection identified native stop as `cableUnlock`, secure approval as `authorise`, and temporary schedule override as `transactionOverridden`. These actions have different semantics. An initial START request used an incorrectly traced host and was rejected. With the independently checked correction, START was acknowledged and reported Charging with override true; STOP was acknowledged and reported Finishing with an inactive transaction. Physical power delivery was not established.
-
-A subsequent read-only observation while the user operated Hive itself reproduced Scheduled → Charging with override true → FINISHING with `transactionActive: false`. Finishing persisted for the observed 90 seconds, and the saved tariff values compared during the test were unchanged. This matches the corrected trial's observed end-session pattern. It does not demonstrate a pause operation or an alternative cancel-override action; no `transactionOverridden: false` command has been proved.
-
-Recovery depends on conditions not yet understood. The user supplied earlier charger-history evidence of Finishing → Available → Preparing → SuspendedEVSE at zero current without going outside or unplugging. In another run, reconnection returned the charger to Scheduled; a later manual-app Stop also prompted unplugging. These observations do not support a universal claim that every Stop requires unplugging, or that every Stop automatically restores readiness. Saved-schedule preservation alone does not prove overnight charging will run. The trial remains separate from the monitoring integration.
-
-## Operational limits
-
-This is cloud polling against undocumented app interfaces, not a local Alfen connection. It depends on Hive authentication, service availability and response compatibility. One overnight run now supports scheduled charging and continuous polling with reported session measurements; see [overnight results](overnight-results.md). The owner separately reports updates resuming after a Home Assistant restart without another sign-in. Specific refresh-token renewal events, detailed restart/registry checks and compatibility across charger models remain unverified. A full Home Assistant runtime validation is also distinct from the local tests described in [testing.md](testing.md).
+This depends on an undocumented cloud interface and normal Hive authentication. One owner's Alfen and limited supervised trials are the hardware evidence; synthetic tests are separate. Pause/resume, general scheduled-session stopping, unattended automation, other charger variants and EV-only upstream setup are not established by this release. Full [testing](testing.md) and [provenance](development-and-provenance.md) records distinguish those limits.
