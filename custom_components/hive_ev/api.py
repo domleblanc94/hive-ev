@@ -177,7 +177,7 @@ class HiveEVClient:
         for attempt in range(2):
             headers = {"Authorization": "Bearer " + self._tokens["id_token"],
                        "x-api-key": APP_KEY, "Content-Type": "application/json",
-                       "User-Agent": "HomeAssistant-HiveEV/0.2.0b3"}
+                       "User-Agent": "HomeAssistant-HiveEV/0.2.0"}
             if nodes:
                 headers.update({"Accept": NODE_ACCEPT, "X-AlertMe-Client": "Honeycomb React Native App"})
             try:

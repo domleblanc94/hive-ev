@@ -2,7 +2,7 @@
 
 <img src="custom_components/hive_ev/brand/icon.png" alt="Unofficial Hive EV logo" width="240">
 
-**0.2.0b3 — beta release candidate.** Monitor a Hive-connected EV charger and optionally enable two experimental manual controls: **Charge now** and **End charging session**. Controls are off on a new installation. Pause/resume and schedule editing are not included.
+**0.2.0 — unofficial community release.** Monitor a Hive-connected EV charger and optionally enable two experimental manual controls: **Charge now** and **End charging session**. Controls are off on a new installation. Pause/resume and schedule editing are not included.
 
 Tested by one owner with a Hive-connected **Alfen NG910, firmware 5.8.1-4123**, using Home Assistant OS. The charger remains connected to Hive over its existing mobile connection; no local charger connection or backend change is required. Other charger models, Power+/DSR control and multiple-charger control are not validated. This is unofficial and is not endorsed by Hive, Alfen or Home Assistant.
 
@@ -20,7 +20,20 @@ Tested by one owner with a Hive-connected **Alfen NG910, firmware 5.8.1-4123**, 
 
 Session energy/duration reset between sessions. Session energy is not a lifetime energy total or an Energy dashboard consumption source. For the dashboard, enable the native **Energy dashboard helper** on the charger device and select it for energy consumption, with **Charging power** for power consumption; see [Energy dashboard and spend](docs/energy-dashboard.md). For charging spend, optionally select a current unit-rate sensor in Hive EV Configure. No supplier-specific entity is built in. The native cost helper is separate from the Energy dashboard device chart; its daily change can be shown with a Statistic card. The older manual GBP package remains an alternative.
 
-## Install or upgrade
+## Install with HACS (recommended)
+
+Requires Home Assistant Core **2026.10.4 or newer** and HACS already installed. If you need HACS on Home Assistant OS, follow the official [Get HACS instructions](https://www.hacs.dev/docs/use/download/download/) and complete its GitHub authorization first.
+
+1. Back up Home Assistant. If upgrading an existing Hive EV installation, disable experimental controls in Configure first.
+2. Open **HACS** in the Home Assistant sidebar → **⋮** (top right) → **Custom repositories**.
+3. Paste `https://github.com/domleblanc94/hive-ev`, choose type/category **Integration**, and select **Add**. This is not an add-on repository or a dashboard plugin.
+4. Find **Hive EV (unofficial)** in HACS, open it, select **Download**, and choose **0.2.0**. If already downloaded, use **⋮ → Redownload**. Normal 0.2.0 does not require enabling beta versions.
+5. **Restart Home Assistant.** On a first installation, open **Settings → Devices & services → Add integration → Hive EV**, sign in with your Hive account-owner login and complete SMS verification.
+6. On an upgrade, **reuse your existing Hive EV integration entry**. Do not delete/re-add it; verify monitoring resumes, then inspect Configure. Your existing options are retained. HACS replaces the component files; it does not automatically enable controls or configure price sensors.
+
+Already installed manually? Add this custom repository and download the same `hive_ev` integration over the existing files after your backup; keep the configured entry and restart. HACS and the manual ZIP are alternative ways to update the same integration, not two integrations to add. Later updates can be downloaded through HACS and followed by a restart. See [HACS installation and troubleshooting](docs/hacs-installation.md).
+
+## Manual install or upgrade
 
 1. Back up Home Assistant and the existing `custom_components/hive_ev` folder. If upgrading from a private experimental build, disable experimental commands in Configure first; existing options are retained during an upgrade.
 2. Extract the release ZIP, or copy this repository's `custom_components/hive_ev` folder, into your Home Assistant configuration directory. The resulting path must be `/config/custom_components/hive_ev/manifest.json`; avoid an extra nested folder. File editor, Studio Code Server or Samba can provide access.
@@ -28,7 +41,7 @@ Session energy/duration reset between sessions. Session energy is not a lifetime
 4. On a new installation, open **Settings → Devices & services → Add integration → Hive EV**. Sign in with the Hive account owner and complete normal SMS verification. If Hive requires a trusted sign-in device, setup offers an initially unchecked registration checkbox to support unattended renewal.
 5. Check status and power against Hive before enabling controls. Existing private experimental options may already be enabled after an upgrade; inspect Configure explicitly.
 
-The project repository is [domleblanc94/hive-ev](https://github.com/domleblanc94/hive-ev). Download the installation ZIP from [GitHub Releases](https://github.com/domleblanc94/hive-ev/releases). Version 0.2.0b3 is a beta/pre-release; HACS availability is not claimed. See [publication steps](PUBLISHING.md).
+The project repository is [domleblanc94/hive-ev](https://github.com/domleblanc94/hive-ev). Download the installation ZIP from [GitHub Releases](https://github.com/domleblanc94/hive-ev/releases). Install through HACS as a **custom repository**, or use the manual installation ZIP. This project is not listed in the default HACS catalog. See [publication steps](PUBLISHING.md).
 
 ## Optional experimental controls
 

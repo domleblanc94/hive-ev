@@ -12,7 +12,7 @@ local Git ignore protection.
 ## Review before publishing
 
 Read the code, [development record](docs/development-and-provenance.md) and
-[validation limits](docs/testing.md). The candidate is **0.2.0b3**, with monitoring and optional default-off experimental
+[validation limits](docs/testing.md). The current community release is **0.2.0**, with monitoring and optional default-off experimental
 manual controls. End session may require reconnection; Pause/resume, unattended
 control and automatic overnight readiness are not established.
 The implementation and tests were generated with OpenAI Codex; AI-agent review is
@@ -60,15 +60,15 @@ The manifest documentation and issue links point to this project. Forks must
 update those links to their actual destination and verify them. Do not invent
 maintainer identities, endorsement or HACS availability.
 
-Build the clean installation ZIP (`hive-ev-0.2.0b3.zip`) with `python tools/build_integration_package.py`
+Build the clean installation ZIP (`hive-ev-0.2.0.zip`) with `python tools/build_integration_package.py`
 if you want to attach it to a GitHub release. The generated `dist/` directory is
 ignored by Git. Do not upload APKs, decompiled code, raw diagnostic responses or
 personal screenshots as release attachments.
 
-## Publish this beta
+## Publish a release
 
 After review, publish the actual reviewed commit and create a GitHub release for
-version 0.2.0b3 with **Set as a pre-release** enabled. Use CHANGELOG.md and the
+version 0.2.0 as a normal release. Future beta tags must be marked as pre-releases; normal releases must not. Use CHANGELOG.md and the
 release notes supplied with the review artifacts. Attach the clean installation
 ZIP and SHA-256 checksums; attach the source archive separately if useful. This
 repository does not automatically publish releases. A hosted CI run, when executed,
@@ -78,7 +78,7 @@ Check the install archive contains controls/diagnostics modules and public
 documents, but no tests, private research, diagnostics files, app material or
 account data. Warn upgraders to disable experimental controls first because
 existing entry options are retained. Mark the narrow End-session and one-trial
-limits prominently. Do not describe the beta as universal charger support.
+limits prominently. Do not describe a normal release as universal charger support or remove the experimental control labels without new evidence.
 
 ## Home Assistant Core is a separate contribution
 
@@ -95,3 +95,7 @@ role and distinguish real-device observations from synthetic tests.
 
 References: GitHub's [new repository instructions](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository)
 and [publishing existing local code](https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github).
+
+## HACS custom repository
+
+Keep `hacs.json` at the repository root in every release. This project uses source-folder installation (`content_in_root: false`, `zip_release: false`) with one integration under custom_components/hive_ev, a declared HA minimum and an actual owner in manifest codeowners. The manually downloadable install ZIP is not the HACS input. Keep [the installation guide](docs/hacs-installation.md) synchronized with releases. This project has not been submitted to the default HACS catalog or the Home Assistant brands repository.

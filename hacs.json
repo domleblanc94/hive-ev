@@ -1,0 +1,7 @@
+{
+  "name": "Hive EV (unofficial)",
+  "homeassistant": "2026.10.4",
+  "content_in_root": false,
+  "zip_release": false,
+  "hide_default_branch": true
+}

@@ -53,3 +53,7 @@ For 0.2.0b2 the owner requested a sensor supplied by Hive EV for the Energy dash
 ## Selectable cost helper
 
 For 0.2.0b3 the owner requested provider-neutral native cost tracking from a selected electricity-rate sensor and daily spend views. Codex agents implemented the optional configuration and independently tested it against synthetic Home Assistant entities. Public code contains no owner EDF entity. Daily/calendar views use standard HA statistics over the monetary total rather than resetting it. Detailed evidence and limits are recorded in testing and release validation.
+
+## Verified Codex commit attribution
+
+On 4 November 2026 the owner asked for GitHub contributor credit. The [Codex profile](https://github.com/codex) identifies OpenAI and links its product page. OpenAI's [published attribution implementation](https://github.com/openai/codex/blob/e4a3612f11ba68ac82111ea986801a3337554083/codex-rs/core/src/commit_attribution.rs) specifies `Codex <noreply@openai.com>`. GitHub API commit-author lookup links that email to @codex. The new HACS/docs commit uses that verified author identity and the owner's normal committer identity; existing published commits and releases are retained. This credits agent-authored work without granting a GitHub collaborator access or implying OpenAI endorses/maintains Hive EV. Sidebar contributor indexing may take time.

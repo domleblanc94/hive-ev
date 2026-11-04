@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 — community release, 4 November 2026
+
+- Publish as a normal GitHub release, retaining unofficial project status and experimental charging-control labels.
+- Add HACS custom-repository metadata, a conservative HA Core 2026.10.4 minimum and clear first-install/manual-upgrade instructions.
+- Credit the verified OpenAI Codex GitHub identity for this agent-authored HACS/documentation update. Published history is not rewritten.
+- Retain the monitoring, optional energy helper and selectable-rate cost helper from 0.2.0b3. Charging/helper behavior and saved Hive schedules are unchanged.
+
 ## 0.2.0b3 — selectable electricity-rate cost helper
 
 Prepared locally, not published.
