@@ -1,7 +1,7 @@
 # Publish this repository yourself
 
-This repository is prepared locally. It has not been published to GitHub and no
-remote destination has been chosen. Do not add the larger investigation workspace
+The owner selected the public repository https://github.com/domleblanc94/hive-ev
+on 4 November 2026. The following procedure also documents future releases. Do not add the larger investigation workspace
 or any extracted Hive application files to it.
 
 The working folder also contains Git-ignored private material. Publish tracked
@@ -42,7 +42,7 @@ that publication is lawful or unlawful. Sources checked 30 October 2026.
 The service is also undocumented and may change or restrict third-party clients;
 technical compatibility and legal permission are separate questions.
 
-Create an empty repository in your own GitHub account. Choose its visibility and
+For a new fork, create an empty repository in your own GitHub account. Choose its visibility and
 name yourself. Do not initialize another README, licence or gitignore there: this
 local repository already includes them. Follow GitHub's instructions for connecting
 an existing repository, using the actual URL GitHub gives you:
@@ -52,15 +52,13 @@ git remote add origin <YOUR_ACTUAL_GITHUB_REPOSITORY_URL>
 git push -u origin main
 ```
 
-The angle-bracketed text is a placeholder, not a configured remote. No assistant
-has run these publication commands. If you already configured an origin, inspect
+The angle-bracketed text is a placeholder for forks; this project uses
+https://github.com/domleblanc94/hive-ev. If you already configured an origin, inspect
 it before changing anything rather than blindly adding or replacing it.
 
-Once the destination exists, update the integration manifest's documentation URL
-to your actual project documentation, and commit that change. Until then its
-documentation link points to the real built-in Hive documentation; that page does
-not document this unofficial EV extension. Do not invent maintainer identities,
-repository URLs, endorsement or HACS availability.
+The manifest documentation and issue links point to this project. Forks must
+update those links to their actual destination and verify them. Do not invent
+maintainer identities, endorsement or HACS availability.
 
 Build the clean installation ZIP (`hive-ev-0.2.0b3.zip`) with `python tools/build_integration_package.py`
 if you want to attach it to a GitHub release. The generated `dist/` directory is

@@ -28,7 +28,7 @@ Session energy/duration reset between sessions. Session energy is not a lifetime
 4. On a new installation, open **Settings → Devices & services → Add integration → Hive EV**. Sign in with the Hive account owner and complete normal SMS verification. If Hive requires a trusted sign-in device, setup offers an initially unchecked registration checkbox to support unattended renewal.
 5. Check status and power against Hive before enabling controls. Existing private experimental options may already be enabled after an upgrade; inspect Configure explicitly.
 
-This release candidate is prepared locally. No hosted repository, release URL or HACS availability is claimed until a real destination is configured. See [publication steps](PUBLISHING.md).
+The project repository is [domleblanc94/hive-ev](https://github.com/domleblanc94/hive-ev). Download the installation ZIP from [GitHub Releases](https://github.com/domleblanc94/hive-ev/releases). Version 0.2.0b3 is a beta/pre-release; HACS availability is not claimed. See [publication steps](PUBLISHING.md).
 
 ## Optional experimental controls
 

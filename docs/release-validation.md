@@ -1,6 +1,6 @@
 # Release candidate validation
 
-Prepared 3 November 2026. The 0.2.0b2 baseline is retained below; 0.2.0b3 cost-helper checks are recorded separately. The public beta source includes monitoring, two default-off experimental manual controls and explicit diagnostics. No release has been published and no GitHub destination is configured yet.
+Prepared 3 November 2026. The 0.2.0b2 baseline is retained below; 0.2.0b3 cost-helper checks are recorded separately. The public beta source includes monitoring, two default-off experimental manual controls and explicit diagnostics. Publication target configured on 4 November 2026: https://github.com/domleblanc94/hive-ev.
 
 ## Automated checks
 
@@ -14,7 +14,7 @@ See testing.md for the distinction between synthetic framework checks, owner-rep
 
 ## Publication status
 
-The owner confirmed that the GitHub repository has not been created. The current manifest's documentation link remains the real built-in Hive page as a documented temporary fallback; it does not document this beta. Replace it with the actual project URL, add an actual issue URL if wanted, and verify the links before publishing. No HACS availability, hosted CI result, public release, maintainer acceptance or human code-review declaration is asserted.
+On 4 November 2026 the owner created the public domleblanc94/hive-ev repository and authorized publication. Manifest documentation and issue links now point there. Prior local runtime records describe pre-publication source; the publication change updates manifest URLs and documentation, without changing charging or helper behavior. Hosted CI is reported separately from those local checks. No HACS support, maintainer acceptance or human code-review declaration is asserted.
 
 The exact beta candidate has not been installed on the owner's live system. Its predecessor's reported hardware results and the synthetic public-code tests are different evidence. The separate Core/library contribution remains monitoring-only and has additional dependency/repository gates.
 
@@ -36,4 +36,4 @@ The final 0.2.0b2 framework run passed 21 cases (the prior 16 plus five energy-h
 - The current install ZIP contains 39 whitelisted files, including 19 component files, with source-byte/privacy-marker/ZIP integrity checks. The prior native-brand test remains applicable because the PNG and delivery path are unchanged.
 - No exact b3 owner installation or rendered daily-cost card is claimed. Compare estimates during a normal charge and tariff boundary before relying on them; unavailable observations can undercount. Daily views require Recorder and sufficient recorded statistics.
 
-The native rate selector stores only a user-chosen local entity reference and currency in options. It contains no owner's EDF identifier and does not change saved Hive schedules or experimental command semantics. The standalone source/install/review artifacts are prepared locally; publication is still pending an actual project URL and owner review.
+The native rate selector stores only a user-chosen local entity reference and currency in options. It contains no owner's EDF identifier and does not change saved Hive schedules or experimental command semantics. The standalone source/install/review artifacts are prepared locally; publication uses the owner-authorized repository; beta review and hardware validation limitations remain.
