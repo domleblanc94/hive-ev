@@ -66,6 +66,10 @@ On 3 November 2026 the owner used the private precursor's Charge Now button and 
 
 See [testing](docs/testing.md) and [release validation](docs/release-validation.md) for automated results and remaining checks. Sustained renewal/expiry recovery, detailed registry checks, further hardware variants and repeated control cycles need more evidence. Hive can change this undocumented interface.
 
+## Help test solar and battery monitoring
+
+Solar and home battery monitoring may be possible in a future version. If your solar or battery system already appears in the Hive app and you can help with read-only testing, please [open a GitHub issue](https://github.com/domleblanc94/hive-ev/issues) with the make and model and the readings you can see in the app. Share only non-sensitive details.
+
 ## Authentication, diagnostics and support
 
 Credentials are entered only in Home Assistant. Its config-entry storage retains tokens, expiry, account identity and an optional trusted-device key; cost options also store the selected local rate entity ID and currency; account and device passwords are not retained. Protect backups because they can contain tokens. Normal reauthentication may require another SMS. Removing this integration does not automatically revoke a Hive trusted sign-in record.
